@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es6", // Support moderne pour la plupart des navigateurs
+    "lib": ["dom", "es6"], // Nécessaire pour travailler avec le DOM et ES6
+    "module": "esnext", // Compatible avec Vite et la syntaxe moderne
+    "moduleResolution": "node", // Résolution des modules pour les imports Node.js
+    "strict": true, // Active toutes les vérifications strictes pour un code robuste
+    "esModuleInterop": true, // Assure la compatibilité avec les modules CommonJS
+    "forceConsistentCasingInFileNames": true, // Enforce une casse cohérente pour les fichiers
+    "skipLibCheck": true, // Améliore la vitesse de compilation en ignorant les fichiers .d.ts
+    "isolatedModules": true, // Requis pour les projets avec transpilation par modules
+    "removeComments": true, // Supprime les commentaires dans le JS compilé
+    "noImplicitAny": false, // Désactive l'erreur si le type "any" est utilisé
+    "noUnusedLocals": true, // Avertit des variables inutilisées
+    "noUnusedParameters": true, // Avertit des paramètres inutilisés
+    "noImplicitReturns": true // Assure que toutes les fonctions retournent quelque chose
+  },
+  "include": ["src"], // Tous les fichiers TypeScript se trouvent dans le dossier `src`
+  "exclude": ["node_modules"] // Exclut le dossier `node_modules`
+}
