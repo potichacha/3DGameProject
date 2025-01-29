@@ -1,0 +1,6 @@
+async initPhysics() {
+    this.havok = await HavokPhysics({
+        wasmUrl: "/babylon.wasm" // Spécifie le chemin du fichier WASM
+    });
+    this.scene.enablePhysics(new Vector3(0, -9.81, 0), new this.havok.PhysicsPlugin());
+}
