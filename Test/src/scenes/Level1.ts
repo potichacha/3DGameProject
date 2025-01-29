@@ -1,51 +1,39 @@
-import { Scene, MeshBuilder, Vector3 } from "babylonjs";
+import { Scene, MeshBuilder, StandardMaterial, Texture, Vector3, PhysicsAggregate, PhysicsShapeType, ArcRotateCamera } from "@babylonjs/core";
+import { MazeGenerator } from "../procedural/MazeGenerator";
+import { InputManager } from "../core/InputManager";
+import { Player } from "../components/Player";
 
 export class Level1 {
-    private player;
+    private scene: Scene;
+    private player!: Player;
 
-    constructor(private scene: Scene) {
+    constructor(scene: Scene) {
+        this.scene = scene;
         this.init();
     }
 
     private init() {
-        // Ajouter un sol
-        const ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, this.scene);
+        // **Créer une caméra**
+        const camera = new ArcRotateCamera("camera", Math.PI / 2, Math.PI / 3, 10, new Vector3(0, 1, 0), this.scene);
+        camera.attachControl(true);
+        this.scene.activeCamera = camera;
 
-        // Ajouter un cube représentant le joueur
-        this.player = MeshBuilder.CreateBox("player", { size: 1 }, this.scene);
-        this.player.position = new Vector3(0, 0.5, 0);
+        // **Créer le sol du labyrinthe**
+        const ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, this.scene);
+        const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
+        groundMaterial.diffuseTexture = new Texture("/assets/textures/ground/labyrinth.jpg", this.scene);
+        ground.material = groundMaterial;
 
-        // Ajouter des obstacles (exemple : murs d’un labyrinthe)
-        const wall1 = MeshBuilder.CreateBox("wall1", { width: 1, height: 2, depth: 5 }, this.scene);
-        wall1.position = new Vector3(2, 1, 0);
+        // Ajouter la physique au sol
+        new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        // Initialiser les contrôles du joueur
-        this.setupPlayerControls();
+        // **Générer le labyrinthe**
+        MazeGenerator.generate(this.scene);
+
+        // **Créer le joueur**
+        this.player = new Player(this.scene, new Vector3(0, 1, 0));
+
+        // **Gérer les inputs**
+        new InputManager(this.scene, this.player.getMesh());
     }
-
-    private setupPlayerControls() {
-        window.addEventListener("keydown", (event) => {
-            const step = 0.5; // Distance de déplacement par pression de touche
-    
-            switch (event.key) {
-                case "ArrowUp":
-                case "z":
-                    this.player.position.z -= step; // Déplacement vers le haut
-                    break;
-                case "ArrowDown":
-                case "s":
-                    this.player.position.z += step; // Déplacement vers le bas
-                    break;
-                case "ArrowLeft":
-                case "q":
-                    this.player.position.x -= step; // Déplacement vers la gauche
-                    break;
-                case "ArrowRight":
-                case "d":
-                    this.player.position.x += step; // Déplacement vers la droite
-                    break;
-            }
-        });
-    }
-    
 }
