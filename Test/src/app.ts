@@ -1,6 +1,6 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight,Texture, Color3,Mesh, MeshBuilder,StandardMaterial } from "@babylonjs/core";
 
 class App {
     constructor() {
@@ -15,10 +15,18 @@ class App {
         var engine = new Engine(canvas, true);
         var scene = new Scene(engine);
 
-        var camera: ArcRotateCamera = new ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, Vector3.Zero(), scene);
+        const ground = MeshBuilder.CreateGround("ground", { width: 1000, height: 1000 });
+        const groundMaterial = new StandardMaterial("groundMaterial", scene);
+        groundMaterial.diffuseTexture = new Texture("textures/grass.jpg", scene);
+        groundMaterial.specularColor = new Color3(3, 0.6, 1.1);
+        groundMaterial.diffuseColor = new Color3(3.5, 1.5, 0.5);
+        ground.material = groundMaterial;
+
+        var camera: ArcRotateCamera = new ArcRotateCamera("Camera", 11,1.2, 200, Vector3.Zero(), scene);
         camera.attachControl(canvas, true);
-        var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(1, 1, 0), scene);
-        var sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 1 }, scene);
+        var light1: HemisphericLight = new HemisphericLight("light1", new Vector3(0, 1, 1), scene);
+        var sphere: Mesh = MeshBuilder.CreateSphere("sphere", { diameter: 10 }, scene);
+        sphere.position.y = 5;
 
         // hide/show the Inspector
         window.addEventListener("keydown", (ev) => {
