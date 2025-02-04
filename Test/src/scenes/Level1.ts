@@ -1,7 +1,7 @@
-import { Scene, MeshBuilder, StandardMaterial, Texture, Vector3, PhysicsAggregate, PhysicsShapeType, ArcRotateCamera } from "@babylonjs/core";
-import { MazeGenerator } from "../procedural/MazeGenerator";
-import { InputManager } from "../core/InputManager";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight } from "@babylonjs/core";
+import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
+import { setupControls } from "../core/InputManager";
 
 export class Level1 {
     private scene: Scene;
@@ -13,27 +13,28 @@ export class Level1 {
     }
 
     private init() {
-        // **Créer une caméra**
-        const camera = new ArcRotateCamera("camera", Math.PI / 2, Math.PI / 3, 10, new Vector3(0, 1, 0), this.scene);
-        camera.attachControl(true);
-        this.scene.activeCamera = camera;
+        console.log("🔨 Création du niveau 1...");
 
-        // **Créer le sol du labyrinthe**
+        // ✅ Ajouter une lumière
+        new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
+
+        // ✅ Créer le sol
         const ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20 }, this.scene);
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
-        groundMaterial.diffuseTexture = new Texture("/assets/textures/ground/labyrinth.jpg", this.scene);
         ground.material = groundMaterial;
 
-        // Ajouter la physique au sol
-        new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+            // ✅ Ajouter la physique au sol
+            new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        // **Générer le labyrinthe**
-        MazeGenerator.generate(this.scene);
-
-        // **Créer le joueur**
+        // ✅ Ajouter le joueur
         this.player = new Player(this.scene, new Vector3(0, 1, 0));
 
-        // **Gérer les inputs**
-        new InputManager(this.scene, this.player.getMesh());
+        // ✅ Ajouter la caméra qui suit le joueur
+        const camera = new FollowCamera("FollowCamera", new Vector3(0, 5, -10), this.scene);
+        camera.lockedTarget = this.player.getMesh(); // La caméra suit le joueur
+        this.scene.activeCamera = camera;
+
+        // ✅ Gérer les inputs
+        setupControls(this.player.getPhysics());
     }
 }

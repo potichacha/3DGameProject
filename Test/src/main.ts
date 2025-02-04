@@ -1,15 +1,15 @@
 import { GameEngine } from "./core/GameEngine";
 import { Level1 } from "./scenes/Level1";
 
-// Récupérer l'élément canvas
-const canvas = document.getElementById("gameCanvas");
-
-if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
-    console.error("L'élément avec l'ID 'gameCanvas' n'est pas un <canvas> ou n'existe pas.");
-} else {
-    // Initialiser le moteur de jeu et attendre que Havok soit chargé
-    new GameEngine(canvas, (scene) => {
-        console.log("🔄 Havok chargé, chargement du niveau 1...");
-        new Level1(scene);
-    });
+// ✅ Vérifier que le canvas existe
+const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+if (!canvas) {
+    console.error("❌ ERREUR : 'gameCanvas' introuvable.");
+    throw new Error("gameCanvas is missing.");
 }
+
+// ✅ Initialiser le moteur de jeu et charger le niveau après la physique
+new GameEngine(canvas, (scene) => {
+    console.log("🔄 Havok chargé, lancement du niveau 1...");
+    new Level1(scene);
+});

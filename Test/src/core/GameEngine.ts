@@ -1,34 +1,37 @@
-import { Scene, Engine, Vector3 } from "@babylonjs/core";
+import { ArcRotateCamera, Engine, Scene, Vector3 } from "@babylonjs/core";
 import HavokPhysics from "@babylonjs/havok";
+import { HavokPlugin } from "@babylonjs/core/Physics/v2";
 
 export class GameEngine {
-    private scene: Scene;
     private engine: Engine;
-    private havok: any;
+    private scene: Scene;
 
-    constructor(canvas: HTMLCanvasElement, callback: (scene: Scene) => void) {
+    constructor(canvas: HTMLCanvasElement, onReady: (scene: Scene) => void) {
         this.engine = new Engine(canvas, true);
         this.scene = new Scene(this.engine);
 
+        // 📷 Ajout d'une caméra
+        const camera = new ArcRotateCamera("camera", Math.PI / 2, Math.PI / 4, 10, Vector3.Zero(), this.scene);
+        camera.attachControl(canvas, true);
+
         this.initPhysics().then(() => {
-            console.log("✅ Havok chargé avec succès.");
-            callback(this.scene); // Démarre le jeu après l'initialisation
-            this.engine.runRenderLoop(() => {
-                this.scene.render();
-            });
-        }).catch((error) => {
-            console.error("❌ Erreur lors du chargement de Havok :", error);
+            console.log("✅ Physique activée !");
+            onReady(this.scene);
         });
 
-        window.addEventListener("resize", () => {
-            this.engine.resize();
+        this.engine.runRenderLoop(() => {
+            this.scene.render();
         });
+
+        window.addEventListener("resize", () => this.engine.resize());
     }
 
-    async initPhysics() {
+    private async initPhysics() {
         console.log("⏳ Chargement de Havok...");
-        this.havok = await HavokPhysics(); // Pas besoin de wasmUrl
-        this.scene.enablePhysics(new Vector3(0, -9.81, 0), new this.havok.PhysicsPlugin());
+        const havok = await HavokPhysics(); // Chargement du moteur physique Havok
+        const physicsPlugin = new HavokPlugin(true, havok);
+        this.scene.enablePhysics(new Vector3(0, -9.81, 0), physicsPlugin);
+        console.log("✅ Havok chargé avec succès !");
     }
 
     getScene(): Scene {
