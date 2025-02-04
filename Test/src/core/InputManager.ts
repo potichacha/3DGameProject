@@ -1,59 +1,34 @@
-import { Mesh, Scene, Vector3, FollowCamera, Scalar, PhysicsBody } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
+import { PhysicsAggregate } from "@babylonjs/core";
 
-export class InputManager {
-    private player: Mesh;
-    private scene: Scene;
-    private physicsBody: PhysicsBody;
+export function setupControls(playerPhysics: PhysicsAggregate) {
+    let isJumping = false;
 
-    constructor(scene: Scene, player: Mesh) {
-        this.scene = scene;
-        this.player = player;
-        this.physicsBody = player.physicsBody as PhysicsBody;
+    window.addEventListener("keydown", (event) => {
+        const force = new Vector3(0, 0, 0);
 
-        this.init();
-    }
-
-    private init() {
-        window.addEventListener("keydown", (event) => this.handleKeyDown(event));
-        window.addEventListener("keyup", (event) => this.handleKeyUp(event));
-        this.scene.onBeforeRenderObservable.add(() => this.update());
-    }
-
-    private inputStates: { [key: string]: boolean } = {};
-
-    private handleKeyDown(event: KeyboardEvent) {
-        this.inputStates[event.key.toLowerCase()] = true;
-    }
-
-    private handleKeyUp(event: KeyboardEvent) {
-        this.inputStates[event.key.toLowerCase()] = false;
-    }
-
-    private update() {
-        const force = 5;
-        const rotationSpeed = 0.05;
-        let movement = new Vector3(0, 0, 0);
-
-        let forward = new Vector3(Math.sin(this.player.rotation.y), 0, Math.cos(this.player.rotation.y));
-
-        // Déplacement avant/arrière
-        if (this.inputStates["z"] || this.inputStates["arrowup"]) {
-            movement.addInPlace(forward.scale(force));
-        }
-        if (this.inputStates["s"] || this.inputStates["arrowdown"]) {
-            movement.addInPlace(forward.scale(-force));
+        switch (event.key) {
+            case "ArrowUp": case "z":
+                force.z = -5;
+                break;
+            case "ArrowDown": case "s":
+                force.z = 5;
+                break;
+            case "ArrowLeft": case "q":
+                force.x = -5;
+                break;
+            case "ArrowRight": case "d":
+                force.x = 5;
+                break;
+            case " ":
+                if (!isJumping) {
+                    force.y = 10;
+                    isJumping = true;
+                    setTimeout(() => isJumping = false, 500); // Empêche le spam de saut
+                }
+                break;
         }
 
-        // Rotation du joueur
-        if (this.inputStates["q"] || this.inputStates["arrowleft"]) {
-            this.player.rotation.y += rotationSpeed;
-        }
-        if (this.inputStates["d"] || this.inputStates["arrowright"]) {
-            this.player.rotation.y -= rotationSpeed;
-        }
-
-        if (!movement.equals(Vector3.Zero())) {
-            this.physicsBody.applyImpulse(movement, this.player.getAbsolutePosition());
-        }
-    }
+        playerPhysics.body.applyImpulse(force, playerPhysics.transformNode.getAbsolutePosition());
+    });
 }
