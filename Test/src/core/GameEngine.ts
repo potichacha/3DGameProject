@@ -1,5 +1,5 @@
 import { ArcRotateCamera, Engine, Scene, Vector3 } from "@babylonjs/core";
-import HavokPhysics from "@babylonjs/havok";
+import HavokPhysics from "https://cdn.babylonjs.com/havok/HavokPhysics_es.js";
 import { HavokPlugin } from "@babylonjs/core/Physics/v2";
 
 export class GameEngine {
