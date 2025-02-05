@@ -1,34 +1,39 @@
-import { Vector3 } from "@babylonjs/core";
+import { Vector3, Quaternion } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 
 export function setupControls(playerPhysics: PhysicsAggregate) {
+    const rotationSpeed = Math.PI / 18; // 📌 Rotation à 10° par frame
+    const moveSpeed = 5; // 📌 Vitesse d'avancement
     let isJumping = false;
 
     window.addEventListener("keydown", (event) => {
-        const force = new Vector3(0, 0, 0);
+        const body = playerPhysics.body;
+        let forward = new Vector3(
+            Math.sin(body.transformNode.rotation.y),
+            0,
+            Math.cos(body.transformNode.rotation.y)
+        );
 
-        switch (event.key) {
-            case "ArrowUp": case "z":
-                force.z = -5;
+        switch (event.key.toLowerCase()) {
+            case "z": // Avancer
+                body.setLinearVelocity(forward.scale(moveSpeed));
                 break;
-            case "ArrowDown": case "s":
-                force.z = 5;
+            case "s": // Reculer
+                body.setLinearVelocity(forward.scale(-moveSpeed));
                 break;
-            case "ArrowLeft": case "q":
-                force.x = -5;
+            case "q": // Rotation gauche (-90°)
+                body.transformNode.rotation.y -= rotationSpeed;
                 break;
-            case "ArrowRight": case "d":
-                force.x = 5;
+            case "d": // Rotation droite (+90°)
+                body.transformNode.rotation.y += rotationSpeed;
                 break;
             case " ":
                 if (!isJumping) {
-                    force.y = 10;
+                    body.applyImpulse(new Vector3(0, 10, 0), body.transformNode.getAbsolutePosition());
                     isJumping = true;
-                    setTimeout(() => isJumping = false, 500); // Empêche le spam de saut
+                    setTimeout(() => (isJumping = false), 500);
                 }
                 break;
         }
-
-        playerPhysics.body.applyImpulse(force, playerPhysics.transformNode.getAbsolutePosition());
     });
 }
