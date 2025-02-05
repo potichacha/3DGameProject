@@ -23,7 +23,7 @@ export class Level1 {
         this.init();
     }
 
-    private init() {
+    private async init() {
         console.log("🔨 Création du niveau 1...");
 
         // ✅ Activer la gestion des collisions pour la scène
@@ -48,6 +48,9 @@ export class Level1 {
 
         // ✅ Ajouter le joueur
         this.player = new Player(this.scene, new Vector3(-20, 1, -20));
+
+        // Attendre que le maillage du joueur soit prêt
+        await this.player.meshReady();
 
         // 📌 Caméra améliorée (3ème personne, évite les murs)
         this.camera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
