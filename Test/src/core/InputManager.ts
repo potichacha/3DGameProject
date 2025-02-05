@@ -17,6 +17,7 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
         switch (event.key.toLowerCase()) {
             case "z": // Avancer
                 body.setLinearVelocity(forward.scale(moveSpeed));
+                console.log("Z");
                 break;
             case "s": // Reculer
                 body.setLinearVelocity(forward.scale(-moveSpeed));
@@ -24,7 +25,7 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
             case "q": // Rotation gauche (-90°)
                 body.transformNode.rotation.y -= rotationSpeed;
                 break;
-            case "d": // Rotation droite (+90°)
+            case "d": // Rotation droite (+90°)d
                 body.transformNode.rotation.y += rotationSpeed;
                 break;
             case " ":
