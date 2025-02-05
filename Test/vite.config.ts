@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
-    assetsInclude: ["**/*.wasm"], // ✅ Permet à Vite de servir les fichiers .wasm
+    assetsInclude: ["**/*.wasm"], // ✅ Permet à Vite de reconnaître les fichiers .wasm
     server: {
         strictPort: true,
         port: 5173,
@@ -10,9 +10,4 @@ export default defineConfig({
             "Cross-Origin-Embedder-Policy": "require-corp"
         }
     },
-    build: {
-        rollupOptions: {
-            external: ["@babylonjs/havok"]
-        }
-    }
 });
