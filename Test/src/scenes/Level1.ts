@@ -24,36 +24,45 @@ export class Level1 {
     private init() {
         console.log("🔨 Création du niveau 1...");
 
+        // ✅ Activer la gestion des collisions pour la scène
+        this.scene.collisionsEnabled = true;
+
         // ✅ Ajouter une lumière
         new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
 
-        // ✅ Créer le sol
-        const groundSize = 20;
+        // ✅ Créer le sol (immense labyrinthe)
+        const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
+        ground.checkCollisions = true; // 📌 Empêche la caméra de passer sous le sol
+
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
         ground.material = groundMaterial;
 
         // ✅ Ajouter la physique au sol
         new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        // ✅ Générer le labyrinthe
+        // ✅ Générer le labyrinthe (avec des murs très espacés et hauts)
         MazeGenerator.generate(this.scene);
 
         // ✅ Ajouter le joueur
-        this.player = new Player(this.scene, new Vector3(-8, 1, -8));
+        this.player = new Player(this.scene, new Vector3(-20, 1, -20));
 
-        // ✅ Ajouter la caméra qui suit le joueur
-        // ✅ Création de la caméra 3ème personne améliorée
-        this.camera = new FollowCamera("FollowCamera", new Vector3(0, 5, -10), this.scene);
+        // 📌 Caméra améliorée (3ème personne, évite les murs)
+        this.camera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
         this.camera.lockedTarget = this.player.getMesh();
-        this.camera.radius = 8;
-        this.camera.heightOffset = 2.5;
-        this.camera.rotationOffset = 180; // 📌 Garde toujours la caméra derrière le joueur
-        this.camera.cameraAcceleration = 0.05; // 📌 Rends les mouvements plus fluides
-        this.camera.maxCameraSpeed = 8;
+        this.camera.radius = 25; // 📌 Distance augmentée
+        this.camera.heightOffset = 7; // 📌 Caméra plus haute
+        this.camera.cameraAcceleration = 0.08;
+        this.camera.maxCameraSpeed = 15;
+
+        // 📌 Empêche la caméra de passer à travers les murs
+        (this.camera as any).checkCollisions = true;
+        (this.camera as any).ellipsoid = new Vector3(1, 1, 1); // 📌 Taille de collision de la caméra
+        this.camera.minZ = 2;
+
         this.scene.activeCamera = this.camera;
 
-        // 📌 Mise à jour de la caméra pour qu’elle suive bien la rotation du joueur
+        // 📌 Mise à jour de la caméra pour suivre la rotation du joueur
         this.scene.onBeforeRenderObservable.add(() => {
             const playerPos = this.player.getMesh().position;
             const playerRotation = this.player.getMesh().rotation.y;
@@ -62,17 +71,16 @@ export class Level1 {
             const offsetX = Math.sin(playerRotation) * -this.camera.radius;
             const offsetZ = Math.cos(playerRotation) * -this.camera.radius;
 
-            // Applique les nouvelles coordonnées
+            // Applique les nouvelles coordonnées de la caméra
             this.camera.position = new Vector3(
                 playerPos.x + offsetX,
                 playerPos.y + this.camera.heightOffset,
                 playerPos.z + offsetZ
             );
 
-            // Ajuste la rotation de la caméra pour qu’elle suive la rotation du joueur
+            // Ajuste la rotation pour suivre le joueur
             this.camera.rotationOffset = -playerRotation * (180 / Math.PI);
         });
-   
 
         // ✅ Ajouter les collectibles sur le sol
         this.spawnCollectibles();
@@ -89,10 +97,11 @@ export class Level1 {
     }
 
     private spawnCollectibles() {
+        // 📌 Positionnement des collectibles dans l'immense labyrinthe
         const positions = [
-            new Vector3(-4, 1, -4),
-            new Vector3(6, 1, -6),
-            new Vector3(0, 1, 6)
+            new Vector3(-50, 1, -50),
+            new Vector3(100, 1, -100),
+            new Vector3(200, 1, 50)
         ];
 
         positions.forEach(pos => {
@@ -107,5 +116,5 @@ export class Level1 {
             console.log(`Collectible ramassé ! ${this.collectedCount}/${this.totalCollectibles}`);
             this.hud.update(this.collectedCount, this.totalCollectibles);
         }
-    }    
+    }
 }
