@@ -3,7 +3,7 @@ import { PhysicsAggregate } from "@babylonjs/core";
 
 export function setupControls(playerPhysics: PhysicsAggregate) {
     const rotationSpeed = Math.PI / 9; // 📌 20° par frame
-    const moveSpeed = 10; // 📌 Vitesse d'avancement
+    const moveSpeed = 20; // 📌 Vitesse d'avancement
     let isJumping = false;
 
     window.addEventListener("keydown", (event) => {

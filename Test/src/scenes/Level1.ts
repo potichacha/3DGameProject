@@ -2,15 +2,17 @@ import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, Hemispheri
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
-import { MazeGenerator } from "../procedural/MazeGenerator";
+import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
+import { Enemy } from "../components/Enemy";
 
 export class Level1 {
     private scene: Scene;
     private player!: Player;
     private camera!: FollowCamera;
     private collectibles: Collectible[] = [];
+    private enemies: Enemy[] = [];
     private hud: HUD;
     private collectedCount: number = 0;
     private totalCollectibles: number = 3;
@@ -33,7 +35,7 @@ export class Level1 {
         // ✅ Créer le sol (immense labyrinthe)
         const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
-        ground.checkCollisions = true; // 📌 Empêche la caméra de passer sous le sol
+        ground.checkCollisions = true;
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
         ground.material = groundMaterial;
@@ -50,14 +52,14 @@ export class Level1 {
         // 📌 Caméra améliorée (3ème personne, évite les murs)
         this.camera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
         this.camera.lockedTarget = this.player.getMesh();
-        this.camera.radius = 25; // 📌 Distance augmentée
-        this.camera.heightOffset = 7; // 📌 Caméra plus haute
+        this.camera.radius = 25;
+        this.camera.heightOffset = 7;
         this.camera.cameraAcceleration = 0.08;
         this.camera.maxCameraSpeed = 15;
 
-        // 📌 Empêche la caméra de passer à travers les murs
+        // 📌 Empêcher la caméra de passer à travers les murs
         (this.camera as any).checkCollisions = true;
-        (this.camera as any).ellipsoid = new Vector3(1, 1, 1); // 📌 Taille de collision de la caméra
+        (this.camera as any).ellipsoid = new Vector3(1, 1, 1);
         this.camera.minZ = 2;
 
         this.scene.activeCamera = this.camera;
@@ -82,8 +84,9 @@ export class Level1 {
             this.camera.rotationOffset = -playerRotation * (180 / Math.PI);
         });
 
-        // ✅ Ajouter les collectibles sur le sol
+        // ✅ Ajouter les collectibles et ennemis
         this.spawnCollectibles();
+        this.spawnEnemies();
 
         // ✅ Gérer les inputs
         setupControls(this.player.getPhysics());
@@ -97,23 +100,50 @@ export class Level1 {
     }
 
     private spawnCollectibles() {
-        // 📌 Positionnement des collectibles dans l'immense labyrinthe
-        const positions = [
-            new Vector3(-50, 1, -50),
-            new Vector3(100, 1, -100),
-            new Vector3(200, 1, 50)
-        ];
-
-        positions.forEach(pos => {
+        let spawned = 0;
+        while (spawned < this.totalCollectibles) {
+            const pos = this.getValidPosition();
             const collectible = new Collectible(this.scene, pos, () => this.collectItem());
             this.collectibles.push(collectible);
-        });
+            spawned++;
+        }
+        console.log(`✨ ${this.collectibles.length} collectibles placés.`);
+    }
+
+    private spawnEnemies() {
+        const enemyPositions = 3; // 📌 Nombre d'ennemis à placer
+        let spawned = 0;
+
+        while (spawned < enemyPositions) {
+            const pos = this.getValidPosition();
+            const enemy = new Enemy(this.scene, pos);
+            this.enemies.push(enemy);
+            spawned++;
+        }
+        console.log(`👾 ${this.enemies.length} ennemis placés.`);
+    }
+
+    private getValidPosition(): Vector3 {
+        let valid = false;
+        let position: Vector3 = new Vector3(0, 1, 0);
+
+        while (!valid) {
+            const x = Math.floor(Math.random() * 50) * 20 - 500;
+            const z = Math.floor(Math.random() * 50) * 20 - 500;
+            position = new Vector3(x, 1, z);
+
+            // Vérifier si la position est un mur
+            if (!isWallPosition(x, z)) {
+                valid = true;
+            }
+        }
+        return position;
     }
 
     private collectItem() {
         if (this.collectedCount < this.totalCollectibles) {
             this.collectedCount = Math.min(this.collectedCount + 1, this.totalCollectibles);
-            console.log(`Collectible ramassé ! ${this.collectedCount}/${this.totalCollectibles}`);
+            console.log(`✅ Collectible ramassé ! ${this.collectedCount}/${this.totalCollectibles}`);
             this.hud.update(this.collectedCount, this.totalCollectibles);
         }
     }
