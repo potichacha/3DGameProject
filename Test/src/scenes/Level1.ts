@@ -1,5 +1,5 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight } from "@babylonjs/core";
-import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes } from "@babylonjs/core";
+import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
 import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
@@ -10,7 +10,9 @@ import { Enemy } from "../components/Enemy";
 export class Level1 {
     private scene: Scene;
     private player!: Player;
-    private camera!: FollowCamera;
+    private followCamera!: FollowCamera;
+    private freeCamera!: FreeCamera;
+    private isFreeCamera: boolean = false; // 📌 Indique si la caméra libre est active
     private collectibles: Collectible[] = [];
     private enemies: Enemy[] = [];
     private hud: HUD;
@@ -26,80 +28,99 @@ export class Level1 {
     private async init() {
         console.log("🔨 Création du niveau 1...");
 
-        // ✅ Activer la gestion des collisions pour la scène
         this.scene.collisionsEnabled = true;
+        console.log("⚙️ Collisions activées pour la scène.");
 
-        // ✅ Ajouter une lumière
         new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
 
-        // ✅ Créer le sol (immense labyrinthe)
         const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
         ground.checkCollisions = true;
+        console.log("🛠️ Sol créé et collisions activées.");
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
         ground.material = groundMaterial;
 
-        // ✅ Ajouter la physique au sol
-        new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+        const groundPhysics = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+        console.log("✅ Physique du sol appliquée :", groundPhysics);
 
-        // ✅ Générer le labyrinthe (avec des murs très espacés et hauts)
         MazeGenerator.generate(this.scene);
 
-        // ✅ Ajouter le joueur
-        this.player = new Player(this.scene, new Vector3(-20, 1, -20));
+        this.player = new Player(this.scene, new Vector3(-20, 5, -20));
+        console.log("🛠️ Joueur ajouté à la scène.");
 
-        // Attendre que le maillage du joueur soit prêt
         await this.player.meshReady();
 
-        // 📌 Caméra améliorée (3ème personne, évite les murs)
-        this.camera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
-        this.camera.lockedTarget = this.player.getMesh();
-        this.camera.radius = 25;
-        this.camera.heightOffset = 7;
-        this.camera.cameraAcceleration = 0.08;
-        this.camera.maxCameraSpeed = 15;
+        const playerPhysics = this.player.getPhysics();
+        if (!playerPhysics) {
+            console.error("❌ Physique du joueur non appliquée !");
+        } else {
+            console.log("✅ Physique du joueur appliquée :", playerPhysics);
+            playerPhysics.body.setMotionType(PhysicsMotionType.DYNAMIC);
+            playerPhysics.body.setLinearDamping(0.9);
+            playerPhysics.body.setAngularDamping(1);
+            playerPhysics.body.setMassProperties({ mass: 5 });
+        }
 
-        // 📌 Empêcher la caméra de passer à travers les murs
-        (this.camera as any).checkCollisions = true;
-        (this.camera as any).ellipsoid = new Vector3(1, 1, 1);
-        this.camera.minZ = 2;
+        setTimeout(() => {
+            console.log("📍 Position après 3 secondes :", this.player.getMesh().position);
+        }, 3000);
 
-        this.scene.activeCamera = this.camera;
+        // ✅ Création de la caméra de suivi
+        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
+        this.followCamera.lockedTarget = this.player.getMesh();
+        this.followCamera.radius = 20;
+        this.followCamera.heightOffset = 20; // Positionner la caméra plus haut
+        this.followCamera.rotationOffset = 180;
+        this.followCamera.cameraAcceleration = 0.05;
+        this.followCamera.maxCameraSpeed = 10;
 
-        // 📌 Mise à jour de la caméra pour suivre la rotation du joueur
-        this.scene.onBeforeRenderObservable.add(() => {
-            const playerPos = this.player.getMesh().position;
-            const playerRotation = this.player.getMesh().rotation.y;
+        // Positionner la caméra en diagonale derrière le joueur
+        this.followCamera.position = new Vector3(this.player.getMesh().position.x - 10, this.player.getMesh().position.y + 10, this.player.getMesh().position.z - 10);
 
-            // Calcule la position idéale derrière le joueur
-            const offsetX = Math.sin(playerRotation) * -this.camera.radius;
-            const offsetZ = Math.cos(playerRotation) * -this.camera.radius;
+        (this.followCamera as any).checkCollisions = true;
+        (this.followCamera as any).ellipsoid = new Vector3(1, 1, 1);
+        this.followCamera.minZ = 2;
 
-            // Applique les nouvelles coordonnées de la caméra
-            this.camera.position = new Vector3(
-                playerPos.x + offsetX,
-                playerPos.y + this.camera.heightOffset,
-                playerPos.z + offsetZ
-            );
+        // ✅ Création de la caméra libre (désactivée par défaut)
+        this.freeCamera = new FreeCamera("FreeCamera", new Vector3(0, 10, 0), this.scene);
+        this.freeCamera.attachControl();
+        this.freeCamera.speed = 5;
+        this.freeCamera.detachControl(); // On la désactive au début
 
-            // Ajuste la rotation pour suivre le joueur
-            this.camera.rotationOffset = -playerRotation * (180 / Math.PI);
+        // Définir la caméra active sur la FollowCamera au départ
+        this.scene.activeCamera = this.followCamera;
+
+        // ✅ Gestion du basculement entre caméras avec la touche "C"
+        this.scene.onKeyboardObservable.add((kbInfo) => {
+            if (kbInfo.type === KeyboardEventTypes.KEYDOWN && kbInfo.event.key.toLowerCase() === "c") {
+                this.toggleFreeCamera();
+            }
         });
 
-        // ✅ Ajouter les collectibles et ennemis
         this.spawnCollectibles();
         this.spawnEnemies();
-
-        // ✅ Gérer les inputs
         setupControls(this.player.getPhysics());
 
-        // ✅ Vérifier les collisions avec les collectibles
         this.scene.onBeforeRenderObservable.add(() => {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getMesh()));
         });
 
         console.log("✅ Niveau 1 prêt !");
+    }
+
+    private toggleFreeCamera() {
+        this.isFreeCamera = !this.isFreeCamera;
+
+        if (this.isFreeCamera) {
+            console.log("🎥 Mode caméra libre activé !");
+            this.scene.activeCamera = this.freeCamera;
+            this.freeCamera.attachControl();
+        } else {
+            console.log("🎥 Mode caméra de suivi activé !");
+            this.scene.activeCamera = this.followCamera;
+            this.freeCamera.detachControl();
+        }
     }
 
     private spawnCollectibles() {
@@ -114,7 +135,7 @@ export class Level1 {
     }
 
     private spawnEnemies() {
-        const enemyPositions = 3; // 📌 Nombre d'ennemis à placer
+        const enemyPositions = 3;
         let spawned = 0;
 
         while (spawned < enemyPositions) {
@@ -135,7 +156,6 @@ export class Level1 {
             const z = Math.floor(Math.random() * 50) * 20 - 500;
             position = new Vector3(x, 1, z);
 
-            // Vérifier si la position est un mur
             if (!isWallPosition(x, z)) {
                 valid = true;
             }
