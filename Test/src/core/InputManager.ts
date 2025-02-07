@@ -1,56 +1,73 @@
 import { Vector3, Quaternion } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 
+const MOVE_SPEED = 5;
+const ROTATION_SPEED = 0.1; // ✅ Même rotation que ton exemple (0.02)
+
 export function setupControls(playerPhysics: PhysicsAggregate) {
-    const rotationSpeed = Math.PI / 18; // 📌 10° par frame (plus fluide)
-    const moveSpeed = 5; // 📌 Vitesse d'avancement (plus raisonnable)
-    const jumpForce = 10; // 📌 Force de saut
-    let isJumping = false;
+    let inputStates = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        jump: false,
+    };
 
     window.addEventListener("keydown", (event) => {
+        switch (event.key.toLowerCase()) {
+            case "s": inputStates.forward = true; break; // ✅ Avancer
+            case "z": inputStates.backward = true; break; // ✅ Reculer
+            case "q": inputStates.left = true; break; // ✅ Rotation fluide à gauche
+            case "d": inputStates.right = true; break; // ✅ Rotation fluide à droite
+            case " ": inputStates.jump = true; break;
+        }
+    });
+
+    window.addEventListener("keyup", (event) => {
+        switch (event.key.toLowerCase()) {
+            case "s": inputStates.forward = false; break;
+            case "z": inputStates.backward = false; break;
+            case "q": inputStates.left = false; break;
+            case "d": inputStates.right = false; break;
+            case " ": inputStates.jump = false; break;
+        }
+    });
+
+    playerPhysics.body.transformNode.getScene().onBeforeRenderObservable.add(() => {
         const body = playerPhysics.body;
         const transformNode = body.transformNode;
-        
-        // Récupérer la direction avant en fonction de la rotation actuelle
-        const forward = new Vector3(
+
+        // ✅ **Utilisation correcte du frontVector comme dans ton exemple**
+        const forwardVector = new Vector3(
             Math.sin(transformNode.rotationQuaternion?.toEulerAngles().y || 0),
             0,
             Math.cos(transformNode.rotationQuaternion?.toEulerAngles().y || 0)
         ).normalize();
 
-        switch (event.key.toLowerCase()) {
-            case "z": // Avancer
-                body.setLinearVelocity(forward.scale(moveSpeed).add(new Vector3(0, body.getLinearVelocity().y, 0)));
-                break;
+        let velocity = new Vector3(0, body.getLinearVelocity().y, 0);
 
-            case "s": // Reculer
-                body.setLinearVelocity(forward.scale(-moveSpeed).add(new Vector3(0, body.getLinearVelocity().y, 0)));
-                break;
+        if (inputStates.forward) velocity = forwardVector.scale(MOVE_SPEED);
+        if (inputStates.backward) velocity = forwardVector.scale(-MOVE_SPEED);
 
-            case "q": // Rotation gauche
-                rotatePlayer(body, -rotationSpeed);
-                break;
+        // ✅ **Stopper le mouvement quand aucune touche n'est pressée**
+        if (!inputStates.forward && !inputStates.backward) {
+            velocity = new Vector3(0, body.getLinearVelocity().y, 0);
+        }
 
-            case "d": // Rotation droite
-                rotatePlayer(body, rotationSpeed);
-                break;
+        body.setLinearVelocity(velocity);
 
-            case " ":
-                if (!isJumping && Math.abs(body.getLinearVelocity().y) < 0.1) {
-                    body.applyImpulse(new Vector3(0, jumpForce, 0), transformNode.getAbsolutePosition());
-                    isJumping = true;
+        // ✅ **Q et D utilisent la rotation fluide comme dans ton exemple**
+        if (inputStates.left) {
+            transformNode.rotationQuaternion = Quaternion.RotationAxis(Vector3.Up(), ROTATION_SPEED)
+                .multiply(transformNode.rotationQuaternion || Quaternion.Identity());
+        }
+        if (inputStates.right) {
+            transformNode.rotationQuaternion = Quaternion.RotationAxis(Vector3.Up(), -ROTATION_SPEED)
+                .multiply(transformNode.rotationQuaternion || Quaternion.Identity());
+        }
 
-                    // Attendre l'atterrissage avant de permettre un nouveau saut
-                    setTimeout(() => (isJumping = false), 500);
-                }
-                break;
+        if (inputStates.jump && Math.abs(body.getLinearVelocity().y) < 0.1) {
+            body.applyImpulse(new Vector3(0, 10, 0), transformNode.getAbsolutePosition());
         }
     });
-}
-
-// Fonction pour tourner correctement le joueur avec des quaternions
-function rotatePlayer(body: PhysicsAggregate["body"], angle: number) {
-    const currentRotation = body.transformNode.rotationQuaternion || Quaternion.Identity();
-    const newRotation = Quaternion.RotationAxis(Vector3.Up(), angle).multiply(currentRotation);
-    body.transformNode.rotationQuaternion = newRotation;
 }

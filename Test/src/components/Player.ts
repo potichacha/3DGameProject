@@ -77,11 +77,11 @@ export class Player {
 
             // ✅ Bloquer les rotations sur X et Z pour que le joueur reste droit
             this.physics.body.setMassProperties({
-                inertia: new Vector3(0, 0, 0), // Supprime l'inertie pour éviter les inclinaisons
+                inertia: new Vector3(0, 1, 0), // Supprime l'inertie pour éviter les inclinaisons
             });
 
             // ✅ Autoriser seulement la rotation sur Y (pour tourner normalement)
-            this.physics.body.setAngularFactor(new Vector3(0, 1, 0));
+            this.physics.body.setAngularVelocity(new Vector3(0, 1, 0));
 
             // ✅ Lier le mesh du joueur à la capsule physique
             this.playerMesh.position = new Vector3(0, -maxHeight / 2, 0);
