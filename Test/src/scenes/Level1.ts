@@ -12,7 +12,7 @@ export class Level1 {
     private player!: Player;
     private followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
-    private isFreeCamera: boolean = false; // 📌 Indique si la caméra libre est active
+    private isFreeCamera: boolean = false;
     private collectibles: Collectible[] = [];
     private enemies: Enemy[] = [];
     private hud: HUD;
@@ -51,52 +51,9 @@ export class Level1 {
 
         await this.player.meshReady();
 
-        const playerPhysics = this.player.getPhysics();
-        if (!playerPhysics) {
-            console.error("❌ Physique du joueur non appliquée !");
-        } else {
-            console.log("✅ Physique du joueur appliquée :", playerPhysics);
-            playerPhysics.body.setMotionType(PhysicsMotionType.DYNAMIC);
-            playerPhysics.body.setLinearDamping(0.9);
-            playerPhysics.body.setAngularDamping(1);
-            playerPhysics.body.setMassProperties({ mass: 5 });
-        }
-
-        setTimeout(() => {
-            console.log("📍 Position après 3 secondes :", this.player.getMesh().position);
-        }, 3000);
-
-        // ✅ Création de la caméra de suivi
-        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
-        this.followCamera.lockedTarget = this.player.getMesh();
-        this.followCamera.radius = 20;
-        this.followCamera.heightOffset = 20; // Positionner la caméra plus haut
-        this.followCamera.rotationOffset = 180;
-        this.followCamera.cameraAcceleration = 0.05;
-        this.followCamera.maxCameraSpeed = 10;
-
-        // Positionner la caméra en diagonale derrière le joueur
-        this.followCamera.position = new Vector3(this.player.getMesh().position.x - 10, this.player.getMesh().position.y + 10, this.player.getMesh().position.z - 10);
-
-        (this.followCamera as any).checkCollisions = true;
-        (this.followCamera as any).ellipsoid = new Vector3(1, 1, 1);
-        this.followCamera.minZ = 2;
-
-        // ✅ Création de la caméra libre (désactivée par défaut)
-        this.freeCamera = new FreeCamera("FreeCamera", new Vector3(0, 10, 0), this.scene);
-        this.freeCamera.attachControl();
-        this.freeCamera.speed = 5;
-        this.freeCamera.detachControl(); // On la désactive au début
-
-        // Définir la caméra active sur la FollowCamera au départ
-        this.scene.activeCamera = this.followCamera;
-
-        // ✅ Gestion du basculement entre caméras avec la touche "C"
-        this.scene.onKeyboardObservable.add((kbInfo) => {
-            if (kbInfo.type === KeyboardEventTypes.KEYDOWN && kbInfo.event.key.toLowerCase() === "c") {
-                this.toggleFreeCamera();
-            }
-        });
+        this.setupFollowCamera();
+        this.setupFreeCamera();
+        this.setupCameraSwitch();
 
         this.spawnCollectibles();
         this.spawnEnemies();
@@ -107,6 +64,38 @@ export class Level1 {
         });
 
         console.log("✅ Niveau 1 prêt !");
+    }
+
+    private setupFollowCamera() {
+        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
+        this.followCamera.lockedTarget = this.player.getMesh();
+        this.followCamera.radius = 15;
+        this.followCamera.heightOffset = 15; // Position plus haute
+        this.followCamera.rotationOffset = 180;
+        this.followCamera.cameraAcceleration = 0.05;
+        this.followCamera.maxCameraSpeed = 10;
+        this.followCamera.inputs.clear(); // Désactive le contrôle manuel de la caméra
+
+        (this.followCamera as any).checkCollisions = true;
+        (this.followCamera as any).ellipsoid = new Vector3(1, 1, 1);
+        this.followCamera.minZ = 2;
+
+        this.scene.activeCamera = this.followCamera;
+    }
+
+    private setupFreeCamera() {
+        this.freeCamera = new FreeCamera("FreeCamera", new Vector3(0, 10, 0), this.scene);
+        this.freeCamera.attachControl();
+        this.freeCamera.speed = 5;
+        this.freeCamera.detachControl();
+    }
+
+    private setupCameraSwitch() {
+        this.scene.onKeyboardObservable.add((kbInfo) => {
+            if (kbInfo.type === KeyboardEventTypes.KEYDOWN && kbInfo.event.key.toLowerCase() === "c") {
+                this.toggleFreeCamera();
+            }
+        });
     }
 
     private toggleFreeCamera() {
