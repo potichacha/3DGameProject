@@ -1,8 +1,8 @@
-import { Vector3, Quaternion } from "@babylonjs/core";
+import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 
-const MOVE_SPEED = 5;
-const ROTATION_SPEED = 0.1; // ✅ Même rotation que ton exemple (0.02)
+const MOVE_SPEED = 7; // 🚀 Augmenté pour aller plus vite
+const ROTATION_SPEED = 0.05; // ✅ Rotation douce et précise
 
 export function setupControls(playerPhysics: PhysicsAggregate) {
     let inputStates = {
@@ -13,61 +13,83 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
         jump: false,
     };
 
+    let rotationY = 0; // ✅ Mémorise la rotation persistante
+
+    // ✅ Ajout des écouteurs d'événements
     window.addEventListener("keydown", (event) => {
         switch (event.key.toLowerCase()) {
-            case "s": inputStates.forward = true; break; // ✅ Avancer
-            case "z": inputStates.backward = true; break; // ✅ Reculer
-            case "q": inputStates.left = true; break; // ✅ Rotation fluide à gauche
-            case "d": inputStates.right = true; break; // ✅ Rotation fluide à droite
+            case "s": inputStates.forward = true; break;
+            case "z": inputStates.backward = true; break;
+            case "q": inputStates.right = true; break; // 🔄 Q tourne à droite maintenant
+            case "d": inputStates.left = true; break; // 🔄 D tourne à gauche maintenant
             case " ": inputStates.jump = true; break;
         }
+        console.log(`🕹️ Key Down: ${event.key}`, inputStates);
     });
 
     window.addEventListener("keyup", (event) => {
         switch (event.key.toLowerCase()) {
             case "s": inputStates.forward = false; break;
             case "z": inputStates.backward = false; break;
-            case "q": inputStates.left = false; break;
-            case "d": inputStates.right = false; break;
+            case "q": inputStates.right = false; break;
+            case "d": inputStates.left = false; break;
             case " ": inputStates.jump = false; break;
         }
+        console.log(`🛑 Key Up: ${event.key}`, inputStates);
     });
 
     playerPhysics.body.transformNode.getScene().onBeforeRenderObservable.add(() => {
         const body = playerPhysics.body;
         const transformNode = body.transformNode;
 
-        // ✅ **Utilisation correcte du frontVector comme dans ton exemple**
-        const forwardVector = new Vector3(
-            Math.sin(transformNode.rotationQuaternion?.toEulerAngles().y || 0),
-            0,
-            Math.cos(transformNode.rotationQuaternion?.toEulerAngles().y || 0)
-        ).normalize();
-
-        let velocity = new Vector3(0, body.getLinearVelocity().y, 0);
-
-        if (inputStates.forward) velocity = forwardVector.scale(MOVE_SPEED);
-        if (inputStates.backward) velocity = forwardVector.scale(-MOVE_SPEED);
-
-        // ✅ **Stopper le mouvement quand aucune touche n'est pressée**
-        if (!inputStates.forward && !inputStates.backward) {
-            velocity = new Vector3(0, body.getLinearVelocity().y, 0);
+        if (!body || !transformNode) {
+            console.warn("❌ Problème: Pas de body ou transformNode détecté !");
+            return;
         }
 
-        body.setLinearVelocity(velocity);
-
-        // ✅ **Q et D utilisent la rotation fluide comme dans ton exemple**
+        // ✅ **Accumulation correcte de la rotation avec inversion**
         if (inputStates.left) {
-            transformNode.rotationQuaternion = Quaternion.RotationAxis(Vector3.Up(), ROTATION_SPEED)
-                .multiply(transformNode.rotationQuaternion || Quaternion.Identity());
+            rotationY += ROTATION_SPEED; // 🔄 D tourne à gauche
         }
         if (inputStates.right) {
-            transformNode.rotationQuaternion = Quaternion.RotationAxis(Vector3.Up(), -ROTATION_SPEED)
-                .multiply(transformNode.rotationQuaternion || Quaternion.Identity());
+            rotationY -= ROTATION_SPEED; // 🔄 Q tourne à droite
         }
 
-        if (inputStates.jump && Math.abs(body.getLinearVelocity().y) < 0.1) {
+        // ✅ Appliquer la rotation au personnage
+        transformNode.rotationQuaternion = Quaternion.FromEulerAngles(0, rotationY, 0);
+        console.log("🔄 Rotation Y:", rotationY);
+
+        // ✅ **Correction du calcul du `forwardVector`**
+        const forwardMatrix = Matrix.RotationY(rotationY);
+        const forwardVector = Vector3.TransformNormal(Vector3.Forward(), forwardMatrix).normalize();
+
+        console.log("➡️ Forward Vector:", forwardVector);
+
+        let newVelocity = body.getLinearVelocity();
+        let moving = false;
+
+        // ✅ Appliquer la vélocité sans annuler le mouvement précédent
+        if (inputStates.forward) {
+            newVelocity = forwardVector.scale(MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
+            moving = true;
+        }
+        if (inputStates.backward) {
+            newVelocity = forwardVector.scale(-MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
+            moving = true;
+        }
+
+        // ✅ Ralentissement progressif si aucune touche n'est pressée
+        if (!moving) {
+            newVelocity = new Vector3(newVelocity.x * 0.9, newVelocity.y, newVelocity.z * 0.9);
+        }
+
+        body.setLinearVelocity(newVelocity);
+        console.log("🚀 Vitesse appliquée:", newVelocity);
+
+        // ✅ Gestion du saut
+        if (inputStates.jump && Math.abs(body.getLinearVelocity().y) < 0.05) {
             body.applyImpulse(new Vector3(0, 10, 0), transformNode.getAbsolutePosition());
+            console.log("🦘 Saut !");
         }
     });
 }
