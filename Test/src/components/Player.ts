@@ -22,6 +22,10 @@ export class Player {
         return this.physics;
     }
 
+    getCapsule() {
+        return this.physicsCapsule;
+    }
+
     private createMesh(startPosition: Vector3) {
         SceneLoader.ImportMeshAsync("", "./src/assets/models/", "finaleSinj.glb", this.scene).then((result) => {
             console.log("🔍 Meshes importés :", result.meshes);
@@ -45,6 +49,7 @@ export class Player {
 
             // 📌 Récupérer la hauteur max du mesh pour bien ajuster la capsule
             //Probleme ici ! on fait peut etre l'inverse ?
+            /*
             let children = this.playerMesh.getChildren();//vide
             console.log("🔍 Enfants du joueur :", children);//vide
             console.log("🔍 joueur :", this.playerMesh);//joueur
@@ -58,17 +63,16 @@ export class Player {
                 maxHeight = Math.max(maxHeight, childHeight);
                 maxWidth = Math.max(maxWidth, childWidth);
             }
-
             console.log("📏 Taille estimée du joueur : hauteur =", maxHeight, ", largeur =", maxWidth);
-            
+            */
 
             // ✅ Création de la capsule physique
             //probleme ici
             this.physicsCapsule = MeshBuilder.CreateCapsule("playerCapsule", {
-                height: 10,
+                height: 8,
                 radius: 3.5,
             }, this.scene);
-            this.physicsCapsule.visibility = 0.1;
+            this.physicsCapsule.visibility = 0;
             this.physicsCapsule.position = new Vector3(startPosition.x, startPosition.y, startPosition.z);
             this.physicsCapsule.rotationQuaternion = Quaternion.Identity();
 
@@ -89,7 +93,7 @@ export class Player {
             this.physics.body.setAngularVelocity(new Vector3(0, 1, 0));
 
             // ✅ Lier le mesh du joueur à la capsule physique
-            this.playerMesh.position = new Vector3(0, -10 / 2, 0); //réparer ici car maxheight est à 0 donc j'ai mis -10
+            this.playerMesh.position = new Vector3(0, -8 / 2, 0); //réparer ici car maxheight est à 0 donc j'ai mis -8
             this.playerMesh.parent = this.physicsCapsule;
 
             console.log("✅ Joueur chargé et physique appliquée !");
