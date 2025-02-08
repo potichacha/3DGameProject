@@ -24,7 +24,7 @@ export class Level1 {
         this.hud = new HUD();
         this.init();
     }
-
+    
     private async init() {
         console.log("🔨 Création du niveau 1...");
 
@@ -46,7 +46,7 @@ export class Level1 {
 
         MazeGenerator.generate(this.scene);
 
-        this.player = new Player(this.scene, new Vector3(-20, 5, -20));
+        this.player = new Player(this.scene, new Vector3(-20, 5, -10));
         console.log("🛠️ Joueur ajouté à la scène.");
 
         await this.player.meshReady();
@@ -63,14 +63,25 @@ export class Level1 {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getMesh()));
         });
 
+        window.addEventListener("keydown", (ev) => {
+            // Shift+Ctrl+Alt+I
+            if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.keyCode === 73) {
+                if (this.scene.debugLayer.isVisible()) {
+                    this.scene.debugLayer.hide();
+                } else {
+                    this.scene.debugLayer.show();
+                }
+            }
+        });
+
         console.log("✅ Niveau 1 prêt !");
     }
 
     private setupFollowCamera() {
         this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
         this.followCamera.lockedTarget = this.player.getMesh();
-        this.followCamera.radius = 15;
-        this.followCamera.heightOffset = 15; // Position plus haute
+        this.followCamera.radius = 30;
+        this.followCamera.heightOffset = 11; // Position plus haute
         this.followCamera.rotationOffset = 180;
         this.followCamera.cameraAcceleration = 0.05;
         this.followCamera.maxCameraSpeed = 10;
