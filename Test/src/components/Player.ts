@@ -40,11 +40,14 @@ export class Player {
 
             console.log("🛠 Mesh sélectionné :", this.playerMesh.name);
 
-            this.playerMesh.scaling = new Vector3(2, 2, 2);
+            this.playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
             this.playerMesh.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
 
             // 📌 Récupérer la hauteur max du mesh pour bien ajuster la capsule
-            let children = this.playerMesh.getChildren();
+            //Probleme ici ! on fait peut etre l'inverse ?
+            let children = this.playerMesh.getChildren();//vide
+            console.log("🔍 Enfants du joueur :", children);//vide
+            console.log("🔍 joueur :", this.playerMesh);//joueur
             let maxHeight = 0;
             let maxWidth = 0;
             for (let i = 0; i < children.length; i++) {
@@ -57,13 +60,15 @@ export class Player {
             }
 
             console.log("📏 Taille estimée du joueur : hauteur =", maxHeight, ", largeur =", maxWidth);
+            
 
             // ✅ Création de la capsule physique
+            //probleme ici
             this.physicsCapsule = MeshBuilder.CreateCapsule("playerCapsule", {
-                height: maxHeight,
-                radius: maxWidth / 2
+                height: 10,
+                radius: 3.5,
             }, this.scene);
-            this.physicsCapsule.visibility = 0.2;
+            this.physicsCapsule.visibility = 0.1;
             this.physicsCapsule.position = new Vector3(startPosition.x, startPosition.y, startPosition.z);
             this.physicsCapsule.rotationQuaternion = Quaternion.Identity();
 
@@ -84,7 +89,7 @@ export class Player {
             this.physics.body.setAngularVelocity(new Vector3(0, 1, 0));
 
             // ✅ Lier le mesh du joueur à la capsule physique
-            this.playerMesh.position = new Vector3(0, -maxHeight / 2, 0);
+            this.playerMesh.position = new Vector3(0, -10 / 2, 0); //réparer ici car maxheight est à 0 donc j'ai mis -10
             this.playerMesh.parent = this.physicsCapsule;
 
             console.log("✅ Joueur chargé et physique appliquée !");

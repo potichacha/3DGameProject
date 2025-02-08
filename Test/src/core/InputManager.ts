@@ -1,8 +1,8 @@
 import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 
-const MOVE_SPEED = 7; // 🚀 Augmenté pour aller plus vite
-const ROTATION_SPEED = 0.05; // ✅ Rotation douce et précise
+const MOVE_SPEED = 20; // 🚀 Augmenté pour aller plus vite
+const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
 
 export function setupControls(playerPhysics: PhysicsAggregate) {
     let inputStates = {
@@ -57,13 +57,13 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
 
         // ✅ Appliquer la rotation au personnage
         transformNode.rotationQuaternion = Quaternion.FromEulerAngles(0, rotationY, 0);
-        console.log("🔄 Rotation Y:", rotationY);
+        //console.log("🔄 Rotation Y:", rotationY);
 
         // ✅ **Correction du calcul du `forwardVector`**
         const forwardMatrix = Matrix.RotationY(rotationY);
         const forwardVector = Vector3.TransformNormal(Vector3.Forward(), forwardMatrix).normalize();
 
-        console.log("➡️ Forward Vector:", forwardVector);
+        //qconsole.log("➡️ Forward Vector:", forwardVector);
 
         let newVelocity = body.getLinearVelocity();
         let moving = false;
@@ -84,7 +84,7 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
         }
 
         body.setLinearVelocity(newVelocity);
-        console.log("🚀 Vitesse appliquée:", newVelocity);
+        //console.log("🚀 Vitesse appliquée:", newVelocity);
 
         // ✅ Gestion du saut
         if (inputStates.jump && Math.abs(body.getLinearVelocity().y) < 0.05) {
