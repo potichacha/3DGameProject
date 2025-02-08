@@ -46,7 +46,7 @@ export class Level1 {
         const groundPhysics = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         console.log("✅ Physique du sol appliquée :", groundPhysics);
 
-        MazeGenerator.generate(this.scene);
+        MazeGenerator.deploy(this.scene);
 
         this.player = new Player(this.scene, new Vector3(-20, 5, -10));
         console.log("🛠️ Joueur ajouté à la scène.");
