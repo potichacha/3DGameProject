@@ -1,4 +1,4 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray, Color3 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
@@ -9,6 +9,7 @@ import { Enemy } from "../components/Enemy";
 
 export class Level1 {
     private scene: Scene;
+    private canvas: HTMLCanvasElement;
     private player!: Player;
     private followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
@@ -19,8 +20,9 @@ export class Level1 {
     private collectedCount: number = 0;
     private totalCollectibles: number = 3;
 
-    constructor(scene: Scene) {
+    constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
+        this.canvas = canvas;
         this.hud = new HUD();
         this.init();
     }
@@ -78,27 +80,62 @@ export class Level1 {
     }
 
     private setupFollowCamera() {
-        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 15, -30), this.scene);
+        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
         this.followCamera.lockedTarget = this.player.getMesh();
-        this.followCamera.radius = 30;
-        this.followCamera.heightOffset = 11; // Position plus haute
+        this.followCamera.radius = 25;
+        this.followCamera.heightOffset = 9;
         this.followCamera.rotationOffset = 180;
-        this.followCamera.cameraAcceleration = 0.05;
+        this.followCamera.cameraAcceleration = 0.5;
         this.followCamera.maxCameraSpeed = 10;
         this.followCamera.inputs.clear(); // Désactive le contrôle manuel de la caméra
 
+        (this.followCamera as any).ellipsoidOffset = new Vector3(2, 2, 2);
         (this.followCamera as any).checkCollisions = true;
-        (this.followCamera as any).ellipsoid = new Vector3(1, 1, 1);
+        this.scene.collisionsEnabled = true;
         this.followCamera.minZ = 2;
-
         this.scene.activeCamera = this.followCamera;
+
+        this.scene.registerBeforeRender(() => {
+            this.checkForObstacles();
+        });
     }
 
+    private checkForObstacles() {
+        const cameraPosition = this.followCamera.position;
+        const playerPosition = this.player.getCapsule().position;
+        
+        const ray = new Ray(cameraPosition, playerPosition.subtract(cameraPosition).normalize());
+        //const ray = new Ray(playerPosition, cameraPosition.subtract(playerPosition).normalize());
+
+        //console.log("pos camera",this.followCamera.position);
+        //dconsole.log("pos player",this.player.getMesh().position);
+
+        //Vérifier les intersections avec le rayon
+        const hit = this.scene.pickWithRay(ray, (mesh) => {
+            //On ne veut pas détecter la caméra ou le joueur comme intersection
+            return mesh !== this.player.getMesh(); 
+        });
+    
+        if (hit) {
+            // S'il y a une collision, on fait quelque chose, par exemple ajuster la position de la caméra
+            if (hit.pickedMesh) {
+                console.log("Obstacle détecté : ", hit.pickedMesh.name);
+                if(hit.pickedMesh.name === "wall"){
+                    this.followCamera.radius = 12;
+                }
+                else{
+                    this.followCamera.radius = 25;
+                }
+            }
+        }
+    }
+    
     private setupFreeCamera() {
         this.freeCamera = new FreeCamera("FreeCamera", new Vector3(0, 10, 0), this.scene);
-        this.freeCamera.attachControl();
+        this.freeCamera.attachControl(this.canvas, true);
         this.freeCamera.speed = 5;
         this.freeCamera.detachControl();
+
     }
 
     private setupCameraSwitch() {
