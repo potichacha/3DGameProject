@@ -1,5 +1,5 @@
 import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh } from "@babylonjs/core";
-import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType } from "@babylonjs/core";
+import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType , AnimationGroup} from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 export class Player {
@@ -8,6 +8,7 @@ export class Player {
     private physicsCapsule!: Mesh;
     private physics!: PhysicsAggregate;
     private meshLoaded: boolean = false;
+    private animationGroup: AnimationGroup[]= [];
 
     constructor(scene: Scene, startPosition: Vector3) {
         this.scene = scene;
@@ -26,10 +27,15 @@ export class Player {
         return this.physicsCapsule;
     }
 
+    getAnimationGroups() {
+        return this.animationGroup;
+    }
+
     private createMesh(startPosition: Vector3) {
         SceneLoader.ImportMeshAsync("", "./src/assets/models/", "finaleSinj.glb", this.scene).then((result) => {
             console.log("🔍 Meshes importés :", result.meshes);
-
+            this.animationGroup = result.animationGroups;
+            console.log("🔍 Animation importés :", this.animationGroup);
             if (result.meshes.length === 0) {
                 console.error("❌ Aucun mesh chargé !");
                 return;
@@ -98,7 +104,6 @@ export class Player {
 
             console.log("✅ Joueur chargé et physique appliquée !");
             this.meshLoaded = true;
-
         }).catch((error) => {
             console.error("❌ Erreur lors du chargement du maillage du joueur:", error);
         });

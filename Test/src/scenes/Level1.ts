@@ -1,5 +1,5 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray, Color3 } from "@babylonjs/core";
-import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray} from "@babylonjs/core";
+import { PhysicsAggregate, PhysicsShapeType} from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
 import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
@@ -59,7 +59,7 @@ export class Level1 {
 
         this.spawnCollectibles();
         this.spawnEnemies();
-        setupControls(this.player.getPhysics());
+        setupControls(this.player);
 
         this.scene.onBeforeRenderObservable.add(() => {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getMesh()));

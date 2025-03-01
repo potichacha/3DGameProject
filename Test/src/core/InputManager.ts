@@ -1,10 +1,12 @@
 import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
+import { Player } from "../components/Player";
 
 const MOVE_SPEED = 20; // 🚀 Augmenté pour aller plus vite
 const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
 
-export function setupControls(playerPhysics: PhysicsAggregate) {
+export function setupControls(player: Player) {
+    let playerPhysics: PhysicsAggregate = player.getPhysics();
     let inputStates = {
         forward: false,
         backward: false,
@@ -47,12 +49,16 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
             return;
         }
 
+        let moving = false;
+        let jumping=false;
         // ✅ **Accumulation correcte de la rotation avec inversion**
         if (inputStates.left) {
             rotationY += ROTATION_SPEED; // 🔄 D tourne à gauche
+            //moving = true;
         }
         if (inputStates.right) {
             rotationY -= ROTATION_SPEED; // 🔄 Q tourne à droite
+            //moving = true;
         }
 
         // ✅ Appliquer la rotation au personnage
@@ -66,7 +72,6 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
         //qconsole.log("➡️ Forward Vector:", forwardVector);
 
         let newVelocity = body.getLinearVelocity();
-        let moving = false;
 
         // ✅ Appliquer la vélocité sans annuler le mouvement précédent
         if (inputStates.forward) {
@@ -81,6 +86,23 @@ export function setupControls(playerPhysics: PhysicsAggregate) {
         // ✅ Ralentissement progressif si aucune touche n'est pressée
         if (!moving) {
             newVelocity = new Vector3(newVelocity.x * 0.9, newVelocity.y, newVelocity.z * 0.9);
+            player.getAnimationGroups()[0].stop();
+            player.getAnimationGroups()[1].start(true);
+        }
+        if (moving) {
+            player.getAnimationGroups()[1].stop();
+            player.getAnimationGroups()[0].start(true);
+        }
+        
+        //gestion du saut
+        if(inputStates.jump){
+            jumping=true;
+        }
+        if(!jumping){
+            player.getAnimationGroups()[2].stop();
+        }
+        if(jumping){
+            player.getAnimationGroups()[2].start(true);
         }
 
         body.setLinearVelocity(newVelocity);
