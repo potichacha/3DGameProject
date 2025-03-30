@@ -9,6 +9,7 @@ export class Player {
     private physics!: PhysicsAggregate;
     private meshLoaded: boolean = false;
     private animationGroup: AnimationGroup[]= [];
+    private health: number = 100; // Points de vie du joueur
 
     constructor(scene: Scene, startPosition: Vector3) {
         this.scene = scene;
@@ -29,6 +30,15 @@ export class Player {
 
     getAnimationGroups() {
         return this.animationGroup;
+    }
+
+    getHealth() {
+        return this.health;
+    }
+
+    reduceHealth(amount: number) {
+        this.health = Math.max(0, this.health - amount);
+        console.log(`🛡️ Joueur touché ! Santé restante : ${this.health}`);
     }
 
     private createMesh(startPosition: Vector3) {

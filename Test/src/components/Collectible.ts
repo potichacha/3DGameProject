@@ -1,9 +1,8 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3 } from "@babylonjs/core";
-import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, AbstractMesh } from "@babylonjs/core";
 
 export class Collectible {
     private scene: Scene;
-    private mesh: any;
+    private mesh: AbstractMesh | null; // ✅ Inclure null dans le type
     private onCollect: () => void; // Fonction appelée quand on ramasse l'objet
 
     constructor(scene: Scene, position: Vector3, onCollect: () => void) {
@@ -19,20 +18,23 @@ export class Collectible {
         material.diffuseColor = Color3.Yellow();
         this.mesh.material = material;
 
-        // 📌 Ajout de la physique (sans gravité)
-        new PhysicsAggregate(this.mesh, PhysicsShapeType.SPHERE, { mass: 0 }, this.scene);
+        // 📌 Désactiver les collisions physiques pour éviter les rebonds
+        this.mesh.checkCollisions = false;
     }
 
-    checkCollision(playerMesh: any) {
+    getPosition(): Vector3 {
+        return this.mesh ? this.mesh.position : Vector3.Zero(); // Retourne la position ou un vecteur nul
+    }
+
+    checkCollision(playerCapsule: AbstractMesh) {
         if (!this.mesh) return; // Evite une double suppression
-    
-        const distance = Vector3.Distance(this.mesh.position, playerMesh.position);
-        if (distance < 1.5) {
+
+        // Vérifie si les bounding boxes se chevauchent
+        if (this.mesh.intersectsMesh(playerCapsule, false)) {
             console.log("✅ Collectible ramassé !");
             this.mesh.dispose(); // Supprime l'objet
             this.mesh = null; // Empêche un double appel
             this.onCollect(); // Appelle la fonction pour mettre à jour le compteur
         }
     }
-    
 }
