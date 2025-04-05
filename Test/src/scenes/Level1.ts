@@ -1,4 +1,4 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
@@ -6,6 +6,7 @@ import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
 import { Enemy } from "../components/Enemy";
+import {Music} from "../music/music";
 
 export class Level1 {
     private scene: Scene;
@@ -21,11 +22,13 @@ export class Level1 {
     private totalCollectibles: number = 3;
     private lastInvisibleWall: any = null; // Stocke le dernier mur rendu invisible
     private projectiles: Mesh[] = []; // Liste des projectiles actifs
+    private music: Music;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
         this.canvas = canvas;
         this.hud = new HUD();
+        this.music = new Music("./src/music/soundstrack/Item Bounce - Kirby Air Ride.mp3");
         this.init();
     }
 
@@ -43,7 +46,10 @@ export class Level1 {
         console.log("🛠️ Sol créé et collisions activées.");
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
+        groundMaterial.diffuseTexture = new Texture("./src/assets/textures/nuage.avif", this.scene);
         ground.material = groundMaterial;
+        (groundMaterial.diffuseTexture as Texture).uScale = 25;
+        (groundMaterial.diffuseTexture as Texture).vScale = 25;
 
         const groundPhysics = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         console.log("✅ Physique du sol appliquée :", groundPhysics);
@@ -67,9 +73,11 @@ export class Level1 {
         this.scene.onBeforeRenderObservable.add(() => {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule())); // Vérifie les collisions
             this.updateHUDWithDistance(); // Met à jour la distance dans le HUD
-            this.checkForObstacles(); // Vérifie les collisions avec les murs
+            //this.checkForObstacles(); // Vérifie les collisions avec les murs
+            this.player.checkForObstacles(this.followCamera,this.lastInvisibleWall); // Vérifie les collisions avec les murs
             this.updateProjectiles(); // Met à jour les projectiles
             this.updateEnemies(); // Met à jour les ennemis
+            this.music.playMusic(); // Joue la musique de fond
         });
 
         window.addEventListener("keydown", (ev) => {

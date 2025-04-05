@@ -1,4 +1,4 @@
-import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType , AnimationGroup} from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
@@ -132,5 +132,36 @@ export class Player {
                 }, 100);
             }
         });
+    }
+
+    public checkForObstacles(followCamera: FollowCamera,lastInvisibleWall: Mesh | null) {
+        const cameraPosition = followCamera.position;
+        const playerPosition = this.getCapsule().position;
+        
+        const direction = playerPosition.subtract(cameraPosition).normalize();
+        const ray = new Ray(cameraPosition, direction, 25); // Longueur du rayon de 20 unités
+        const rayEnd = playerPosition.add(direction.scale(50));
+        //const rayMesh = MeshBuilder.CreateLines("ray", { points: [cameraPosition, rayEnd] }, scene); //créer un rayon pour le debug
+        // Vérifier les intersections avec le rayon
+        const hit = this.scene.pickWithRay(ray, (mesh) => {
+            // On ne veut pas détecter la caméra ou le joueur comme intersection
+            return mesh !== this.getMesh() && mesh.name === "wall"; // Vérifie que c'est un mur
+        });
+
+        if (hit && hit.pickedMesh) {
+            const wall = hit.pickedMesh;
+
+            // Rendre le mur invisible
+            if (lastInvisibleWall && lastInvisibleWall !== wall) {
+                lastInvisibleWall.isVisible = true; // Rendre visible le dernier mur invisible
+            }
+
+            wall.isVisible = false; // Rendre le mur actuel invisible
+            lastInvisibleWall = wall as Mesh; // Mettre à jour le dernier mur invisible
+        } else if (lastInvisibleWall) {
+            // Si aucun mur n'est détecté, rendre visible le dernier mur invisible
+            lastInvisibleWall.isVisible = true;
+            lastInvisibleWall = null;
+        }
     }
 }
