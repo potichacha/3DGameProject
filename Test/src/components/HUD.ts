@@ -80,4 +80,8 @@ export class HUD {
         this.counterElement.style.display = "none";
         this.distanceElement.style.display = "none";
     }
+
+    updateMission(mission: string) {
+        this.missionElement.innerText = `Mission: ${mission}`;
+    }
 }
