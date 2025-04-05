@@ -1,14 +1,14 @@
-import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray, StandardMaterial, Color3 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType , AnimationGroup} from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 export class Player {
     private scene: Scene;
-    private playerMesh!: Mesh;
-    private physicsCapsule!: Mesh;
-    private physics!: PhysicsAggregate;
+    private playerMesh!: Mesh; // Ajout de "!" pour indiquer qu'il sera initialisé plus tard
+    private physicsCapsule!: Mesh; // Ajout de "!" pour indiquer qu'il sera initialisé plus tard
+    private physics!: PhysicsAggregate; // Ajout de "!" pour indiquer qu'il sera initialisé plus tard
+    private animationGroup: AnimationGroup[] = [];
     private meshLoaded: boolean = false;
-    private animationGroup: AnimationGroup[]= [];
     private health: number = 100; // Points de vie du joueur
 
     constructor(scene: Scene, startPosition: Vector3) {
@@ -39,6 +39,13 @@ export class Player {
     reduceHealth(amount: number) {
         this.health = Math.max(0, this.health - amount);
         console.log(`🛡️ Joueur touché ! Santé restante : ${this.health}`);
+
+        // Teinter le joueur en rouge en fonction de sa santé
+        const redIntensity = (100 - this.health) / 100; // Intensité du rouge (0 à 1)
+        const material = this.playerMesh.material as StandardMaterial;
+        if (material) {
+            material.diffuseColor = new Color3(1, 1 - redIntensity, 1 - redIntensity); // Rouge plus intense avec moins de santé
+        }
     }
 
     private createMesh(startPosition: Vector3) {

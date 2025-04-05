@@ -3,7 +3,7 @@ import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
     private scene: Scene;
-    private mesh: AbstractMesh;
+    private mesh!: AbstractMesh; // Ajout de "!" pour indiquer qu'il sera initialisé plus tard
     private health: number;
     private lastShotTime: number = 0; // Temps du dernier tir
 

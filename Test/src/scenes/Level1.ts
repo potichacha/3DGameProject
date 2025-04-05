@@ -6,23 +6,30 @@ import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
 import { Enemy } from "../components/Enemy";
-import {Music} from "../music/music";
+import { Music } from "../music/music";
 
 export class Level1 {
     private scene: Scene;
-    private canvas: HTMLCanvasElement;
+    private canvas!: HTMLCanvasElement;
     private player!: Player;
     private followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
     private isFreeCamera: boolean = false;
     private collectibles: Collectible[] = [];
     private enemies: Enemy[] = [];
-    private hud: HUD;
+    private hud!: HUD;
     private collectedCount: number = 0;
     private totalCollectibles: number = 3;
-    private lastInvisibleWall: any = null; // Stocke le dernier mur rendu invisible
-    private projectiles: Mesh[] = []; // Liste des projectiles actifs
-    private music: Music;
+    private lastInvisibleWall: Mesh | null = null;
+    private projectiles: Mesh[] = [];
+    private music!: Music;
+    private currentMission: string = "Introduction";
+    private dialogs: string[] = [];
+    private pnj!: Mesh;
+    private endPoint!: Mesh;
+    private dialogBox: HTMLElement | null = null;
+    private dialogIndex: number = 0;
+    private dialogActive: boolean = false;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
@@ -43,7 +50,6 @@ export class Level1 {
         const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
         ground.checkCollisions = true;
-        console.log("🛠️ Sol créé et collisions activées.");
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
         groundMaterial.diffuseTexture = new Texture("./src/assets/textures/nuage.avif", this.scene);
@@ -51,14 +57,11 @@ export class Level1 {
         (groundMaterial.diffuseTexture as Texture).uScale = 25;
         (groundMaterial.diffuseTexture as Texture).vScale = 25;
 
-        const groundPhysics = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
-        console.log("✅ Physique du sol appliquée :", groundPhysics);
+        new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
         MazeGenerator.deploy(this.scene);
 
         this.player = new Player(this.scene, new Vector3(-20, 5, -10));
-        console.log("🛠️ Joueur ajouté à la scène.");
-
         await this.player.meshReady();
 
         this.setupFollowCamera();
@@ -70,19 +73,20 @@ export class Level1 {
         this.spawnEnemies();
         setupControls(this.player);
 
+        this.initMissions();
+
         this.scene.onBeforeRenderObservable.add(() => {
-            this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule())); // Vérifie les collisions
-            this.updateHUDWithDistance(); // Met à jour la distance dans le HUD
-            //this.checkForObstacles(); // Vérifie les collisions avec les murs
-            this.player.checkForObstacles(this.followCamera,this.lastInvisibleWall); // Vérifie les collisions avec les murs
-            this.updateProjectiles(); // Met à jour les projectiles
-            this.updateEnemies(); // Met à jour les ennemis
-            this.music.playMusic(); // Joue la musique de fond
+            this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
+            this.updateHUDWithDistance();
+            this.player.checkForObstacles(this.followCamera, this.lastInvisibleWall);
+            this.updateProjectiles();
+            this.updateEnemies();
+            this.music.playMusic();
+            this.checkMissionProgress();
         });
 
         window.addEventListener("keydown", (ev) => {
-            // Shift+Ctrl+Alt+I
-            if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.keyCode === 73) {
+            if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.key === "I") {
                 if (this.scene.debugLayer.isVisible()) {
                     this.scene.debugLayer.hide();
                 } else {
@@ -102,46 +106,8 @@ export class Level1 {
         this.followCamera.rotationOffset = 180;
         this.followCamera.cameraAcceleration = 0.5;
         this.followCamera.maxCameraSpeed = 10;
-        this.followCamera.inputs.clear(); // Désactive le contrôle manuel de la caméra
-
-        (this.followCamera as any).ellipsoidOffset = new Vector3(2, 2, 2);
-        (this.followCamera as any).checkCollisions = true;
-        this.scene.collisionsEnabled = true;
-        this.followCamera.minZ = 2;
+        this.followCamera.inputs.clear();
         this.scene.activeCamera = this.followCamera;
-
-        this.scene.registerBeforeRender(() => {
-            this.checkForObstacles();
-        });
-    }
-
-    private checkForObstacles() {
-        const cameraPosition = this.followCamera.position;
-        const playerPosition = this.player.getCapsule().position;
-
-        const ray = new Ray(cameraPosition, playerPosition.subtract(cameraPosition).normalize());
-
-        // Vérifier les intersections avec le rayon
-        const hit = this.scene.pickWithRay(ray, (mesh) => {
-            // On ne veut pas détecter la caméra ou le joueur comme intersection
-            return mesh !== this.player.getMesh() && mesh.name === "wall"; // Vérifie que c'est un mur
-        });
-
-        if (hit && hit.pickedMesh) {
-            const wall = hit.pickedMesh;
-
-            // Rendre le mur invisible
-            if (this.lastInvisibleWall && this.lastInvisibleWall !== wall) {
-                this.lastInvisibleWall.isVisible = true; // Rendre visible le dernier mur invisible
-            }
-
-            wall.isVisible = false; // Rendre le mur actuel invisible
-            this.lastInvisibleWall = wall; // Mettre à jour le dernier mur invisible
-        } else if (this.lastInvisibleWall) {
-            // Si aucun mur n'est détecté, rendre visible le dernier mur invisible
-            this.lastInvisibleWall.isVisible = true;
-            this.lastInvisibleWall = null;
-        }
     }
 
     private setupFreeCamera() {
@@ -163,26 +129,61 @@ export class Level1 {
         this.isFreeCamera = !this.isFreeCamera;
 
         if (this.isFreeCamera) {
-            console.log("🎥 Mode caméra libre activé !");
             this.scene.activeCamera = this.freeCamera;
             this.freeCamera.attachControl();
         } else {
-            console.log("🎥 Mode caméra de suivi activé !");
             this.scene.activeCamera = this.followCamera;
             this.freeCamera.detachControl();
         }
     }
 
+    private setupShooting() {
+        // Écouteur pour détecter l'appui sur la touche "F" pour tirer
+        window.addEventListener("keydown", (event) => {
+            if (event.key.toLowerCase() === "f") { // Appuie sur la touche "F"
+                this.shootProjectile();
+            }
+        });
+
+        // Met à jour les projectiles à chaque frame
+        this.scene.onBeforeRenderObservable.add(() => {
+            this.updateProjectiles();
+        });
+    }
+
+    private shootProjectile() {
+        const playerPosition = this.player.getCapsule().position.clone();
+
+        // Utilisez la rotation actuelle du joueur pour calculer la direction avant
+        let forwardVector = this.player.getCapsule().forward.normalize();
+
+        // Inverser la direction
+        forwardVector = forwardVector.scale(-1);
+
+        // Crée un projectile (petite sphère bleue)
+        const projectile = MeshBuilder.CreateSphere("projectile", { diameter: 0.5 }, this.scene);
+        projectile.position = playerPosition.add(forwardVector.scale(2)); // Position initiale devant le joueur
+
+        const material = new StandardMaterial("projectileMat", this.scene);
+        material.diffuseColor = new Color3(0, 0, 1); // Bleu
+        projectile.material = material;
+
+        // Ajoute une vélocité au projectile
+        const velocity = forwardVector.scale(20); // Vitesse du projectile
+        projectile.metadata = { velocity }; // Stocke la vélocité dans les métadonnées
+
+        this.projectiles.push(projectile);
+    }
+
     private spawnCollectibles() {
         let spawned = 0;
-        const minDistanceFromWalls = 3; // Distance minimale entre un collectible et un mur
-        const minDistanceFromPlayer = 10; // Distance minimale entre un collectible et le joueur
-        const minDistanceBetweenCollectibles = 3; // Distance minimale entre deux collectibles
+        const minDistanceFromWalls = 3;
+        const minDistanceFromPlayer = 50; // ✅ Collectibles spawn beaucoup plus loin du joueur
+        const minDistanceBetweenCollectibles = 10;
 
         while (spawned < this.totalCollectibles) {
             const pos = this.getValidPositionInMaze(minDistanceFromWalls, minDistanceFromPlayer);
 
-            // Vérifier que le collectible n'est pas trop proche des autres collectibles
             const isTooCloseToOtherCollectibles = this.collectibles.some((collectible) => {
                 const distance = Vector3.Distance(collectible.getPosition(), pos);
                 return distance < minDistanceBetweenCollectibles;
@@ -194,21 +195,23 @@ export class Level1 {
                 spawned++;
             }
         }
-
-        console.log(`✨ ${this.collectibles.length} collectibles placés.`);
     }
 
     private getValidPositionInMaze(minDistanceFromWalls: number, minDistanceFromPlayer: number): Vector3 {
         let valid = false;
         let position: Vector3 = new Vector3(0, 1, 0);
-
+        let attempts = 0; // ✅ Compteur de tentatives
         while (!valid) {
-            const x = Math.floor(Math.random() * 50) * 2 - 50; // Ajuster les limites du labyrinthe
+            attempts++;
+            if (attempts > 100) {
+                console.warn("Impossible de trouver une position valide après plusieurs tentatives !");
+                return position;
+            }
+
+            const x = Math.floor(Math.random() * 50) * 2 - 50;
             const z = Math.floor(Math.random() * 50) * 2 - 50;
             position = new Vector3(x, 1, z);
 
-            // Vérifier que la position n'est pas dans un mur, respecte la distance minimale des murs,
-            // et est suffisamment éloignée de la position de départ du joueur
             if (
                 !isWallPosition(x, z) &&
                 this.isFarFromWalls(position, minDistanceFromWalls) &&
@@ -217,12 +220,10 @@ export class Level1 {
                 valid = true;
             }
         }
-
         return position;
     }
 
     private isFarFromWalls(position: Vector3, minDistance: number): boolean {
-        // Vérifie que la position est à une distance minimale des murs
         for (let dx = -minDistance; dx <= minDistance; dx++) {
             for (let dz = -minDistance; dz <= minDistance; dz++) {
                 if (isWallPosition(position.x + dx, position.z + dz)) {
@@ -241,13 +242,10 @@ export class Level1 {
 
     private collectItem() {
         if (this.collectedCount < this.totalCollectibles) {
-            this.collectedCount = Math.min(this.collectedCount + 1, this.totalCollectibles);
-            console.log(`✅ Collectible ramassé ! ${this.collectedCount}/${this.totalCollectibles}`);
-            this.hud.update(this.collectedCount, this.totalCollectibles); // Met à jour le HUD
+            this.collectedCount++;
+            this.hud.update(this.collectedCount, this.totalCollectibles);
 
-            // Masquer le HUD des collectibles si tous sont collectés
             if (this.collectedCount === this.totalCollectibles) {
-                console.log("🎉 Tous les collectibles ont été ramassés !");
                 this.hud.hideCollectiblesHUD();
             }
         }
@@ -255,38 +253,34 @@ export class Level1 {
 
     private updateHUDWithDistance() {
         if (this.collectibles.length === 0) {
-            this.hud.updateDistance(0); // Si aucun collectible, afficher 0
+            this.hud.updateDistance(0);
             return;
         }
 
-        let closestCollectible: Collectible | null = null;
         let closestDistance = Infinity;
 
         for (const collectible of this.collectibles) {
-            if (!collectible.getPosition()) continue; // Ignorer les collectibles déjà collectés
+            if (!collectible.getPosition()) continue;
             const dist = Vector3.Distance(this.player.getCapsule().position, collectible.getPosition());
             if (dist < closestDistance) {
                 closestDistance = dist;
-                closestCollectible = collectible;
             }
         }
 
-        if (closestCollectible) {
-            this.hud.updateDistance(Math.round(closestDistance)); // Met à jour la distance dans le HUD
-        }
+        this.hud.updateDistance(Math.round(closestDistance));
     }
 
     private spawnEnemies() {
-        const minDistanceFromWalls = 3; // Distance minimale entre un ennemi et un mur
-        const minDistanceFromPlayer = 10; // Distance minimale entre un ennemi et le joueur
-        const minDistanceBetweenEnemies = 5; // Distance minimale entre deux ennemis
+        const minDistanceFromWalls = 3;
+        const minDistanceFromPlayer = 70; // Les ennemis spawnent loin du joueur
+        const minDistanceBetweenEnemies = 15;
 
-        // Spawner 3 ennemis autour de chaque collectible
+        // Spawner des ennemis autour des collectibles
         this.collectibles.forEach((collectible) => {
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 2; i++) {
                 const collectiblePosition = collectible.getPosition();
                 const offset = new Vector3(
-                    Math.random() * 6 - 3, // Position aléatoire autour du collectible
+                    Math.random() * 6 - 3,
                     0,
                     Math.random() * 6 - 3
                 );
@@ -299,12 +293,11 @@ export class Level1 {
             }
         });
 
-        // Spawner 10 ennemis aléatoirement dans le labyrinthe
+        // Spawner des ennemis aléatoirement dans le labyrinthe
         let spawnedInMaze = 0;
-        while (spawnedInMaze < 10) {
+        while (spawnedInMaze < 5) {
             const pos = this.getValidPositionInMaze(minDistanceFromWalls, minDistanceFromPlayer);
 
-            // Vérifier que l'ennemi n'est pas trop proche des autres ennemis
             const isTooCloseToOtherEnemies = this.enemies.some((enemy) => {
                 const distance = Vector3.Distance(enemy.getMesh().position, pos);
                 return distance < minDistanceBetweenEnemies;
@@ -316,142 +309,14 @@ export class Level1 {
                 spawnedInMaze++;
             }
         }
-
-        console.log(`👾 ${this.enemies.length} ennemis placés.`);
-    }
-
-    private getValidPosition(): Vector3 {
-        let valid = false;
-        let position: Vector3 = new Vector3(0, 1, 0);
-
-        while (!valid) {
-            const x = Math.floor(Math.random() * 50) * 20 - 500;
-            const z = Math.floor(Math.random() * 50) * 20 - 500;
-            position = new Vector3(x, 1, z);
-
-            if (!isWallPosition(x, z)) {
-                valid = true;
-            }
-        }
-        return position;
-    }
-
-    // Ajoutez une méthode pour gérer les dégâts infligés au joueur
-    private applyDamageToPlayer(damage: number) {
-        this.player.reduceHealth(damage);
-        this.hud.updatePlayerHealth(this.player.getHealth()); // Met à jour la barre de vie dans le HUD
-        if (this.player.getHealth() <= 0) {
-            console.log("❌ Le joueur est mort !");
-            // Ajoutez ici une logique pour gérer la mort du joueur (ex: réinitialisation du niveau)
-        }
-    }
-
-    private setupShooting() {
-        window.addEventListener("keydown", (event) => {
-            if (event.key.toLowerCase() === "f") { // Appuie sur la touche "F"
-                this.shootProjectile();
-            }
-        });
-
-        this.scene.onBeforeRenderObservable.add(() => {
-            this.updateProjectiles();
-        });
-    }
-
-    private shootProjectile() {
-        const playerPosition = this.player.getCapsule().position.clone();
-
-        // Utilisez la rotation actuelle du joueur pour calculer la direction avant
-        let forwardVector = this.player.getCapsule().forward.normalize();
-
-        // Inverser la direction
-        forwardVector = forwardVector.scale(-1);
-
-        // Vérifiez que le vecteur est correctement orienté
-        console.log("⬅️ Direction inversée du tir :", forwardVector);
-
-        // Crée un projectile (petite sphère bleue)
-        const projectile = MeshBuilder.CreateSphere("projectile", { diameter: 0.5 }, this.scene);
-        projectile.position = playerPosition.add(forwardVector.scale(2)); // Position initiale devant le joueur
-
-        const material = new StandardMaterial("projectileMat", this.scene);
-        material.diffuseColor = new Color3(0, 0, 1); // Bleu
-        projectile.material = material;
-
-        // Ajoute une vélocité au projectile
-        const velocity = forwardVector.scale(20); // Vitesse du projectile
-        projectile.metadata = { velocity }; // Stocke la vélocité dans les métadonnées
-
-        this.projectiles.push(projectile);
-    }
-
-    private updateProjectiles() {
-        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000; // Temps écoulé en secondes
-
-        this.projectiles = this.projectiles.filter((projectile) => {
-            if (!projectile) return false;
-
-            // Met à jour la position du projectile
-            const velocity = projectile.metadata.velocity;
-            projectile.position.addInPlace(velocity.scale(deltaTime));
-
-            // Vérifie les collisions avec les ennemis
-            for (const enemy of this.enemies) {
-                if (enemy.getMesh().intersectsMesh(projectile, false)) {
-                    console.log("💥 Projectile a touché un ennemi !");
-                    enemy.reduceHealth(50); // Inflige 50 points de dégâts
-                    projectile.dispose(); // Supprime le projectile
-                    return false; // Retire le projectile de la liste
-                }
-            }
-
-            // Supprime le projectile s'il sort de la scène
-            if (projectile.position.length() > 1000) {
-                projectile.dispose();
-                return false;
-            }
-
-            return true; // Garde le projectile actif
-        });
     }
 
     private updateEnemies() {
-        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000; // Temps écoulé en secondes
+        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
 
         this.enemies.forEach((enemy) => {
             const enemyMesh = enemy.getMesh();
 
-            // Vérifie si l'ennemi est assigné à un collectible
-            const assignedCollectible = this.getAssignedCollectible(enemyMesh.position);
-            if (assignedCollectible) {
-                // L'ennemi défend un collectible : léger déplacement autour du collectible
-                const collectiblePosition = assignedCollectible.getPosition();
-                const distanceToCollectible = Vector3.Distance(enemyMesh.position, collectiblePosition);
-
-                if (distanceToCollectible > 5) {
-                    // Si l'ennemi s'éloigne trop, le ramener près du collectible
-                    const directionToCollectible = collectiblePosition.subtract(enemyMesh.position).normalize();
-                    enemyMesh.position.addInPlace(directionToCollectible.scale(deltaTime * 2)); // Déplacement vers le collectible
-                } else {
-                    // Sinon, léger déplacement aléatoire autour du collectible
-                    const randomDirection = new Vector3(
-                        Math.random() * 0.5 - 0.25,
-                        0,
-                        Math.random() * 0.5 - 0.25
-                    );
-                    enemyMesh.position.addInPlace(randomDirection);
-                }
-            } else {
-                // Déplacement aléatoire pour les ennemis éloignés des collectibles
-                const randomDirection = new Vector3(
-                    Math.random() * 2 - 1,
-                    0,
-                    Math.random() * 2 - 1
-                ).normalize();
-                enemyMesh.position.addInPlace(randomDirection.scale(deltaTime * 2)); // Déplacement lent
-            }
-
-            // Vérifie si l'ennemi "voit" le joueur
             const directionToPlayer = this.player.getCapsule().position.subtract(enemyMesh.position).normalize();
             const ray = new Ray(enemyMesh.position, directionToPlayer);
             const hit = this.scene.pickWithRay(ray, (mesh) => mesh === this.player.getCapsule());
@@ -462,14 +327,149 @@ export class Level1 {
         });
     }
 
-    private getAssignedCollectible(enemyPosition: Vector3): Collectible | null {
-        // Retourne le collectible le plus proche si l'ennemi est assigné à un collectible
-        for (const collectible of this.collectibles) {
-            const distance = Vector3.Distance(collectible.getPosition(), enemyPosition);
-            if (distance < 10) { // Considérer comme assigné si à moins de 10 unités
-                return collectible;
+    private updateProjectiles() {
+        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
+
+        this.projectiles = this.projectiles.filter((projectile) => {
+            if (!projectile) return false;
+
+            const velocity = projectile.metadata.velocity;
+            projectile.position.addInPlace(velocity.scale(deltaTime));
+
+            for (const enemy of this.enemies) {
+                if (enemy.getMesh().intersectsMesh(projectile, false)) {
+                    enemy.reduceHealth(50);
+                    projectile.dispose();
+                    return false;
+                }
             }
+
+            if (projectile.position.length() > 1000) {
+                projectile.dispose();
+                return false;
+            }
+
+            return true;
+        });
+    }
+
+    private setupDialogBox() {
+        this.dialogBox = document.createElement("div");
+        this.dialogBox.style.position = "absolute";
+        this.dialogBox.style.bottom = "20px";
+        this.dialogBox.style.left = "50%";
+        this.dialogBox.style.transform = "translateX(-50%)";
+        this.dialogBox.style.padding = "20px";
+        this.dialogBox.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+        this.dialogBox.style.color = "white";
+        this.dialogBox.style.fontFamily = "Arial, sans-serif";
+        this.dialogBox.style.fontSize = "18px";
+        this.dialogBox.style.borderRadius = "10px";
+        this.dialogBox.style.display = "none";
+        document.body.appendChild(this.dialogBox);
+
+        // Ajoutez un écouteur pour passer au texte suivant avec "Espace"
+        window.addEventListener("keydown", (event) => {
+            if (this.dialogActive && event.key === " ") { // Appuie sur "Espace"
+                this.advanceDialog();
+            }
+        });
+    }
+
+    private startDialog(dialogs: string[], onComplete: () => void) {
+        this.dialogs = dialogs;
+        this.dialogIndex = 0;
+        this.dialogActive = true;
+
+        if (this.dialogBox) {
+            this.dialogBox.innerText = `${this.dialogs[this.dialogIndex]} (Press Space to skip)`;
+            this.dialogBox.style.display = "block";
         }
-        return null;
+
+        // Empêche le joueur de bouger pendant le dialogue
+        this.scene.onBeforeRenderObservable.clear();
+
+        // Stocke la fonction à exécuter une fois le dialogue terminé
+        this.dialogBox!.dataset.onComplete = onComplete.toString();
+    }
+
+    private advanceDialog() {
+        this.dialogIndex++;
+        if (this.dialogIndex < this.dialogs.length) {
+            if (this.dialogBox) {
+                this.dialogBox.innerText = `${this.dialogs[this.dialogIndex]} (Press Space to skip)`;
+            }
+        } else {
+            // Fin du dialogue
+            this.dialogActive = false;
+            if (this.dialogBox) {
+                this.dialogBox.style.display = "none";
+            }
+
+            // Réactive les interactions
+            setupControls(this.player); // ✅ Réactive les contrôles du joueur
+            this.scene.onBeforeRenderObservable.add(() => {
+                this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
+                this.updateHUDWithDistance();
+                this.player.checkForObstacles(this.followCamera, this.lastInvisibleWall);
+                this.updateProjectiles();
+                this.updateEnemies();
+                this.music.playMusic();
+                this.checkMissionProgress();
+            });
+
+            // Exécute la fonction de fin de dialogue
+            const onComplete = this.dialogBox!.dataset.onComplete;
+            if (onComplete) eval(onComplete)();
+        }
+    }
+
+    private initMissions() {
+        this.setupDialogBox();
+
+        // Démarre le premier dialogue
+        this.startDialog(
+            ["Bienvenue dans le jeu !", "Votre première mission est de parler au PNJ."],
+            () => {
+                this.currentMission = "Talk to the PNJ";
+                this.hud.updateMission(this.currentMission);
+                this.spawnPNJ();
+            }
+        );
+    }
+
+    private spawnPNJ() {
+        this.pnj = MeshBuilder.CreateSphere("pnj", { diameter: 2 }, this.scene);
+        const playerPosition = this.player.getCapsule().position;
+        this.pnj.position = new Vector3(playerPosition.x + 5, 1, playerPosition.z + 5); // ✅ PNJ spawn proche mais pas trop près
+
+        const material = new StandardMaterial("pnjMat", this.scene);
+        material.diffuseColor = new Color3(0, 0, 1); // Bleu
+        this.pnj.material = material;
+
+        // Vérifie si le joueur est proche du PNJ
+        this.scene.onBeforeRenderObservable.add(() => {
+            const distance = Vector3.Distance(this.player.getCapsule().position, this.pnj.position);
+            if (distance < 5) {
+                this.hud.updateMission("Press 'E' to talk to the PNJ");
+
+                // Ajoute un écouteur pour interagir avec le PNJ
+                window.addEventListener("keydown", (event) => {
+                    if (event.key.toLowerCase() === "e") {
+                        this.startDialog(
+                            ["Bonjour, aventurier !", "Votre mission est de collecter tous les objets."],
+                            () => {
+                                this.currentMission = "Collect all items";
+                                this.hud.updateMission(this.currentMission);
+                            }
+                        );
+                    }
+                });
+            }
+        });
+    }
+
+    private checkMissionProgress() {
+        // Ajoutez ici la logique pour vérifier la progression des missions
     }
 }
