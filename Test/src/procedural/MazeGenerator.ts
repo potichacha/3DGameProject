@@ -51,8 +51,11 @@ export class MazeGenerator {
 
     static deploy(scene: Scene) {
         const wallMaterial = new StandardMaterial("wallMaterial", scene);
-        wallMaterial.diffuseTexture = new Texture("/assets/textures/walls/brick.jpg", scene);
-        wallMaterial.specularColor = new Color3(0, 0, 0);
+        //wallMaterial.diffuseTexture = new Texture("./src/assets/textures/nuage.avif", scene);
+        wallMaterial.diffuseTexture = new Texture("./src/assets/textures/Deepslate.webp", scene);
+        wallMaterial.diffuseTexture.wrapU = Texture.WRAP_ADDRESSMODE;
+        wallMaterial.diffuseTexture.wrapV = Texture.WRAP_ADDRESSMODE;
+        
 
         MazeGenerator.generate();
 
@@ -66,15 +69,17 @@ export class MazeGenerator {
     }
 
     private static createWall(scene: Scene, x: number, z: number, material: StandardMaterial) {
-        const wall = MeshBuilder.CreateBox("wall", { width: this.cellSize, height: this.wallHeight, depth: this.cellSize }, scene);
+        const wall = MeshBuilder.CreateBox("wall", { width: this.cellSize, height: this.wallHeight, depth: this.cellSize }, scene);        
         wall.position = new Vector3(
             x * this.cellSize - (this.mazeGrid[0].length * this.cellSize) / 2,
             this.wallHeight / 2,
             z * this.cellSize - (this.mazeGrid.length * this.cellSize) / 2
         );
         wall.material = material;
+        (material.diffuseTexture as Texture).uScale = 1;
+        (material.diffuseTexture as Texture).vScale = 1;
         wall.checkCollisions = true;
-
+        
         new PhysicsAggregate(wall, PhysicsShapeType.BOX, { mass: 0 }, scene);
     }
 
