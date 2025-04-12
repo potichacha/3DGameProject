@@ -3,7 +3,7 @@ import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
     private scene: Scene;
-    private mesh!: AbstractMesh; // Ajout de "!" pour indiquer qu'il sera initialisé plus tard
+    private mesh: AbstractMesh | null = null; // Permet d'assigner null après suppression
     private health: number;
     private lastShotTime: number = 0; // Temps du dernier tir
 
@@ -40,7 +40,10 @@ export class Enemy {
         this.health = Math.max(0, this.health - amount);
         console.log(`👾 Ennemi touché ! Santé restante : ${this.health}`);
         if (this.health <= 0) {
-            this.mesh.dispose(); // Supprime l'ennemi de la scène
+            if (this.mesh) {
+                this.mesh.dispose(); // Supprime l'ennemi de la scène
+                this.mesh = null; // Empêche toute interaction future avec cet ennemi
+            }
             console.log("👾 Ennemi éliminé !");
         }
     }
@@ -50,6 +53,10 @@ export class Enemy {
         if (currentTime - this.lastShotTime < 2000) return; // Tir toutes les 2 secondes
         this.lastShotTime = currentTime;
 
+        if (!this.mesh) {
+            console.error("❌ Enemy mesh is null. Cannot create ray.");
+            return;
+        }
         // Vérifie la ligne de vue directe vers le joueur
         const ray = new Ray(this.mesh.position, playerPosition.subtract(this.mesh.position).normalize());
         const hit = scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
@@ -57,7 +64,6 @@ export class Enemy {
 
         // Crée un projectile (petite sphère rouge)
         const projectile = MeshBuilder.CreateSphere("enemyProjectile", { diameter: 0.5 }, scene);
-        projectile.position = this.mesh.position.clone();
 
         const material = new StandardMaterial("projectileMat", scene);
         material.diffuseColor = new Color3(1, 0, 0); // Rouge
@@ -79,6 +85,11 @@ export class Enemy {
             const ray = new Ray(projectile.position, velocity.normalize());
             const hit = scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
             if (hit && hit.pickedMesh) {
+                projectile.dispose();
+            }
+
+            // Supprime le projectile s'il sort de la scène
+            if (projectile.position.length() > 1000) {
                 projectile.dispose();
             }
         });

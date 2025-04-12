@@ -68,7 +68,7 @@ export class HUD {
     }
 
     updatePlayerHealth(health: number) {
-        this.healthBar.style.width = `${health}%`;
+        this.healthBar.style.width = `${Math.max(0, Math.min(health, 100))}%`; // Clamp health between 0 and 100
 
         // Interpolation de couleur du vert (100%) au rouge (0%)
         const red = Math.min(255, Math.floor((100 - health) * 2.55)); // Augmente le rouge
