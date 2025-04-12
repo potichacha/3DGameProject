@@ -39,6 +39,18 @@ export class Level1 {
         this.init();
     }
 
+    private updateScene() {
+        this.scene.onBeforeRenderObservable.add(() => {
+            this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
+            this.updateHUDWithDistance();
+            this.lastInvisibleWall = this.player.checkForObstacles(this.followCamera, this.lastInvisibleWall);
+            this.updateProjectiles();
+            this.updateEnemies();
+            this.music.playMusic();
+            this.checkMissionProgress();
+        });
+    }
+
     private async init() {
         console.log("🔨 Création du niveau 1...");
 
@@ -75,15 +87,7 @@ export class Level1 {
 
         this.initMissions();
 
-        this.scene.onBeforeRenderObservable.add(() => {
-            this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
-            this.updateHUDWithDistance();
-            this.player.checkForObstacles(this.followCamera, this.lastInvisibleWall);
-            this.updateProjectiles();
-            this.updateEnemies();
-            this.music.playMusic();
-            this.checkMissionProgress();
-        });
+        this.updateScene();
 
         window.addEventListener("keydown", (ev) => {
             if (ev.shiftKey && ev.ctrlKey && ev.altKey && ev.key === "I") {
@@ -453,15 +457,7 @@ export class Level1 {
 
             // Réactive les interactions
             setupControls(this.player); // ✅ Réactive les contrôles du joueur
-            this.scene.onBeforeRenderObservable.add(() => {
-                this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
-                this.updateHUDWithDistance();
-                this.player.checkForObstacles(this.followCamera, this.lastInvisibleWall);
-                this.updateProjectiles();
-                this.updateEnemies();
-                this.music.playMusic();
-                this.checkMissionProgress();
-            });
+            this.updateScene();
 
             // Exécute la fonction de fin de dialogue
             const onComplete = this.dialogBox!.dataset.onComplete;

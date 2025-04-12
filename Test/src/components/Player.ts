@@ -116,27 +116,59 @@ export class Player {
         });
     }
 
-    public checkForObstacles(followCamera: FollowCamera, lastInvisibleWall: Mesh | null) {
+    public checkForObstacles(followCamera: FollowCamera, currentlyInvisibleWall: Mesh | null): Mesh | null {
         const cameraPosition = followCamera.position;
-        const playerPosition = this.getCapsule().position;
+        if (!this.physicsCapsule) {
+            console.warn("Player physics capsule not ready for obstacle check.");
+            return currentlyInvisibleWall; // Return the current state if not ready
+        }
+        const playerPosition = this.physicsCapsule.position;
 
+        // Calculate direction and exact distance for the ray
         const direction = playerPosition.subtract(cameraPosition).normalize();
-        const ray = new Ray(cameraPosition, direction, 25);
+        const distance = Vector3.Distance(cameraPosition, playerPosition);
 
+        // Ensure distance is slightly more than 0 to avoid issues with ray creation
+        if (distance < 0.1) {
+            // If camera and player are too close, make sure any invisible wall is visible
+            if (currentlyInvisibleWall) {
+                currentlyInvisibleWall.isVisible = true;
+            }
+            return null; // No obstruction possible
+        }
+
+        // Create the ray with the exact distance
+        const ray = new Ray(cameraPosition, direction, distance);
+
+        // Perform the raycast, only checking walls
         const hit = this.scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
 
-        if (hit && hit.pickedMesh) {
-            const wall = hit.pickedMesh;
+        let newlyInvisibleWall: Mesh | null = null;
 
-            if (lastInvisibleWall && lastInvisibleWall !== wall) {
-                lastInvisibleWall.isVisible = true;
+        if (hit && hit.pickedMesh && hit.pickedMesh instanceof Mesh) {
+            const hitWall = hit.pickedMesh;
+
+            // A wall was hit by the ray
+            if (currentlyInvisibleWall && currentlyInvisibleWall !== hitWall) {
+                // If a *different* wall was invisible before, make it visible now.
+                currentlyInvisibleWall.isVisible = true;
             }
 
-            wall.isVisible = false;
-            lastInvisibleWall = wall as Mesh;
-        } else if (lastInvisibleWall) {
-            lastInvisibleWall.isVisible = true;
-            lastInvisibleWall = null;
+            // Make the newly hit wall invisible and mark it as the current one.
+            hitWall.isVisible = false;
+            newlyInvisibleWall = hitWall;
+
+        } else {
+            // No wall was hit by the ray
+            if (currentlyInvisibleWall) {
+                // If a wall *was* invisible, make it visible now.
+                currentlyInvisibleWall.isVisible = true;
+            }
+            // No wall is currently invisible
+            newlyInvisibleWall = null;
         }
+
+        // Return the wall that is now invisible (or null)
+        return newlyInvisibleWall;
     }
 }
