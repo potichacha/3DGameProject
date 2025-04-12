@@ -30,6 +30,7 @@ export class Level1 {
     private dialogBox: HTMLElement | null = null;
     private dialogIndex: number = 0;
     private dialogActive: boolean = false;
+    private typewriterIntervalId: number | null = null;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
@@ -406,18 +407,37 @@ export class Level1 {
 
     private typeWriterEffect(text: string, element: HTMLElement, speed: number, onComplete: () => void) {
         let index = 0;
-        const interval = setInterval(() => {
+        // Clear any previous interval just in case
+        if (this.typewriterIntervalId !== null) {
+            window.clearInterval(this.typewriterIntervalId);
+            this.typewriterIntervalId = null;
+        }
+
+        element.innerHTML = ''; // Start with a clean slate for the effect
+
+        // Store the new interval ID
+        this.typewriterIntervalId = window.setInterval(() => {
             if (index < text.length) {
-                element.innerHTML += text[index] === ' ' ? '&nbsp;' : text[index]; // Replace spaces with non-breaking spaces
+                element.innerHTML += text[index] === ' ' ? '&nbsp;' : text[index];
                 index++;
-            } else {
-                clearInterval(interval);
-                onComplete();
+            }
+            else {
+                // Effect finished, clear the interval
+                if (this.typewriterIntervalId !== null) {
+                    window.clearInterval(this.typewriterIntervalId);
+                    this.typewriterIntervalId = null;
+                }
+                onComplete(); // Call the original completion function
             }
         }, speed);
     }
 
     private startDialog(dialogs: string[], onComplete: () => void) {
+        if (this.typewriterIntervalId !== null) {
+            window.clearInterval(this.typewriterIntervalId);
+            this.typewriterIntervalId = null;
+        }
+
         this.dialogs = dialogs;
         this.dialogIndex = 0;
         this.dialogActive = true;
@@ -426,7 +446,10 @@ export class Level1 {
             this.dialogBox.innerText = ""; // Clear previous text
             this.dialogBox.style.display = "block";
             this.typeWriterEffect(this.dialogs[this.dialogIndex], this.dialogBox, 50, () => {
-                this.dialogBox!.innerText += " (Press Space to skip)";
+                // Only add skip text if dialog is still active for this line
+                if (this.dialogActive && this.dialogIndex === 0 && this.dialogBox) {
+                    this.dialogBox.innerHTML += " <span style='opacity: 0.7;'>(Press Space)</span>"; // Append skip hint
+                }
             });
         }
 
@@ -440,30 +463,48 @@ export class Level1 {
     }
 
     private advanceDialog() {
-        this.dialogIndex++;
-        if (this.dialogIndex < this.dialogs.length) {
-            if (this.dialogBox) {
-                this.dialogBox.innerText = ""; // Clear previous text
-                this.typeWriterEffect(this.dialogs[this.dialogIndex], this.dialogBox, 50, () => {
-                    this.dialogBox!.innerText += " (Press Space to skip)";
-                });
-            }
-        } else {
-            // Fin du dialogue
-            this.dialogActive = false;
-            if (this.dialogBox) {
-                this.dialogBox.style.display = "none";
-            }
+    // Stop the currently running typewriter first
+    if (this.typewriterIntervalId !== null) {
+        window.clearInterval(this.typewriterIntervalId);
+        this.typewriterIntervalId = null;
+    }
 
-            // Réactive les interactions
-            setupControls(this.player); // ✅ Réactive les contrôles du joueur
-            this.updateScene();
+    this.dialogIndex++;
+    if (this.dialogIndex < this.dialogs.length) {
+        if (this.dialogBox) {
+            this.dialogBox.innerText = ""; // Clear previous text
+            this.typeWriterEffect(this.dialogs[this.dialogIndex], this.dialogBox, 50, () => {
+                // Only add skip text if dialog is still active for this line
+                 if (this.dialogActive && this.dialogIndex < this.dialogs.length && this.dialogBox) {
+                     this.dialogBox.innerHTML += " <span style='opacity: 0.7;'>(Press Space)</span>"; // Append skip hint
+                }
+            });
+        }
+    } else {
+        // Fin du dialogue
+        this.dialogActive = false;
+        if (this.dialogBox) {
+            this.dialogBox.style.display = "none";
+        }
 
-            // Exécute la fonction de fin de dialogue
-            const onComplete = this.dialogBox!.dataset.onComplete;
-            if (onComplete) eval(onComplete)();
+        // Réactive les interactions
+        setupControls(this.player); // ✅ Réactive les contrôles du joueur
+        this.updateScene();
+
+
+        // Exécute la fonction de fin de dialogue sequence
+        const onCompleteSequence = this.dialogBox!.dataset.onCompleteSequence;
+        if (onCompleteSequence) {
+             // Utiliser le constructeur Function est plus sûr que eval
+             try {
+                const func = new Function(`(${onCompleteSequence})()`);
+                func();
+             } catch (e) {
+                console.error("Error executing dialog onComplete sequence:", e);
+             }
         }
     }
+}
 
     private initMissions() {
         this.setupDialogBox();
