@@ -1,9 +1,9 @@
-import { Scene, MeshBuilder, StandardMaterial, Texture, Vector3, PhysicsAggregate, PhysicsShapeType, Color3 } from "@babylonjs/core";
+import { Scene, MeshBuilder, StandardMaterial, Texture, Vector3, PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class MazeGenerator {
     static mazeGrid: string[] = Array(51).fill(null).map(() => Array(51).fill("1").join(''));
 
-    static readonly wallHeight = 15;
+    static readonly wallHeight = 50;
     static readonly cellSize = 20;
 
     /* Fisher-Yates shuffle */
