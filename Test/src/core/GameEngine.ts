@@ -38,4 +38,12 @@ export class GameEngine {
     getScene(): Scene {
         return this.scene;
     }
+
+    private handleEnemyMesh(enemyMesh: any) {
+        if (!enemyMesh) {
+            console.error("❌ enemyMesh is null. Cannot proceed with the operation.");
+            return;
+        }
+        // Add operations on enemyMesh here
+    }
 }

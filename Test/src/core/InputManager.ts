@@ -2,7 +2,7 @@ import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 import { Player } from "../components/Player";
 
-const MOVE_SPEED = 20; // 🚀 Augmenté pour aller plus vite
+const MOVE_SPEED = 10; // Réduit la vitesse de déplacement pour un contrôle plus fluide
 const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
 
 export function setupControls(player: Player) {
@@ -19,18 +19,18 @@ export function setupControls(player: Player) {
 
     window.addEventListener("keydown", (event) => {
         switch (event.key.toLowerCase()) {
-            case "z": inputStates.backward= true; break;
-            case "s": inputStates.forward = true; break;
-            case "q": inputStates.left = true; break; // 🔄 Q tourne à gauche
-            case "d": inputStates.right = true; break; // 🔄 D tourne à droite
-            case " ": inputStates.jump = true; break;
+            case "z": inputStates.backward = true; break; // Avancer
+            case "s": inputStates.forward = true; break; // Reculer
+            case "q": inputStates.left = true; break; // Tourner à gauche
+            case "d": inputStates.right = true; break; // Tourner à droite
+            case " ": inputStates.jump = true; break; // Sauter
         }
     });
 
     window.addEventListener("keyup", (event) => {
         switch (event.key.toLowerCase()) {
-            case "z": inputStates.backward = false; break;
-            case "s": inputStates.forward = false; break;
+            case "z": inputStates.forward = false; break;
+            case "s": inputStates.backward = false; break;
             case "q": inputStates.left = false; break;
             case "d": inputStates.right = false; break;
             case " ": inputStates.jump = false; break;
@@ -70,7 +70,7 @@ export function setupControls(player: Player) {
         }
 
         if (!moving) {
-            newVelocity = new Vector3(newVelocity.x * 0.9, newVelocity.y, newVelocity.z * 0.9);
+            newVelocity = new Vector3(0, newVelocity.y, 0); // ✅ Arrête complètement le mouvement horizontal
         }
 
         body.setLinearVelocity(newVelocity);
