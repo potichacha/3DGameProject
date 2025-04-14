@@ -13,10 +13,10 @@ export class Enemy {
 
         // 📌 Création de l'ennemi (capsule rouge)
         this.mesh = MeshBuilder.CreateCapsule("enemyCapsule", {
-            height: 8, // Même hauteur que le joueur
-            radius: 3.5, // Même rayon que le joueur
+            height: 4, // Réduction de la hauteur
+            radius: 2, // Réduction du rayon
         }, this.scene);
-        this.mesh.position = position;
+        this.mesh.position = new Vector3(position.x, 1.5, position.z); // Forcer Y à 1.5 pour élever les ennemis
         this.mesh.rotationQuaternion = Quaternion.Identity();
 
         // 📌 Matériau rouge pour l'ennemi

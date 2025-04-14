@@ -11,7 +11,7 @@ export class Collectible {
 
         // 📌 Création du collectible (petite sphère brillante)
         this.mesh = MeshBuilder.CreateSphere("collectible", { diameter: 1 }, this.scene);
-        this.mesh.position = position;
+        this.mesh.position = new Vector3(position.x, 1.5, position.z); // Forcer Y à 1.5 pour élever les collectibles
 
         // 📌 Matériau coloré pour le rendre visible
         const material = new StandardMaterial("collectibleMat", this.scene);
