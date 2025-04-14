@@ -104,10 +104,10 @@ export class Level1 {
 
     private setupFollowCamera() {
         this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
-        this.followCamera.lockedTarget = this.player.getMesh();
+        this.followCamera.lockedTarget = this.player.getCapsule();
         this.followCamera.radius = 25;
         this.followCamera.heightOffset = 9;
-        this.followCamera.rotationOffset = 180;
+        this.followCamera.rotationOffset = 0;
         this.followCamera.cameraAcceleration = 0.5;
         this.followCamera.maxCameraSpeed = 10;
         this.followCamera.inputs.clear();

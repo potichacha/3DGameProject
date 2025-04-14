@@ -19,8 +19,8 @@ export function setupControls(player: Player) {
 
     window.addEventListener("keydown", (event) => {
         switch (event.key.toLowerCase()) {
-            case "z": inputStates.backward = true; break; // Avancer
-            case "s": inputStates.forward = true; break; // Reculer
+            case "s": inputStates.backward = true; break; // Avancer
+            case "z": inputStates.forward = true; break; // Reculer
             case "q": inputStates.left = true; break; // Tourner à gauche
             case "d": inputStates.right = true; break; // Tourner à droite
             case " ": inputStates.jump = true; break; // Sauter
@@ -64,11 +64,12 @@ export function setupControls(player: Player) {
 
         let newVelocity = body.getLinearVelocity();
 
-        if (inputStates.forward) {
+        if (inputStates.backward) {
             newVelocity = forwardVector.scale(MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
+            //player.getAnimationGroups()[1].play(true); // Joue l'animation de marche
             moving = true;
         }
-        if (inputStates.backward) {
+        if (inputStates.forward) {
             newVelocity = forwardVector.scale(-MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
             moving = true;
         }

@@ -1,10 +1,11 @@
-import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray, StandardMaterial, Color3 } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray, StandardMaterial, Color3, TransformNode } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType, AnimationGroup } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 export class Player {
     private scene: Scene;
     private playerMesh!: Mesh;
+    private playerRoot!: TransformNode;
     private physicsCapsule!: Mesh;
     private physics!: PhysicsAggregate;
     private animationGroup: AnimationGroup[] = [];
@@ -19,7 +20,9 @@ export class Player {
     getMesh() {
         return this.playerMesh;
     }
-
+    getRoot() {
+        return this.playerRoot;
+    }
     getPhysics() {
         return this.physics;
     }
@@ -48,8 +51,18 @@ export class Player {
     }
 
     private createMesh(startPosition: Vector3) {
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "finaleSinj.glb", this.scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "sinj31.glb", this.scene).then((result) => {//finaleSinj
             console.log("🔍 Meshes importés :", result.meshes);
+            console.log("🔍 Meshes importés :", result);
+
+            result.meshes.forEach((mesh, i) => {
+                console.log(`🔹 Mesh ${i} — ${mesh.name}`);
+                if (mesh.material) {
+                    console.log(`🎨 Matériau pour ${mesh.name} :`, mesh.material.name);
+                } else {
+                    console.warn(`❌ Pas de matériau pour ${mesh.name}`);
+                }
+            });
             this.animationGroup = result.animationGroups;
             console.log("🔍 Animations importées :", this.animationGroup);
 
@@ -57,8 +70,17 @@ export class Player {
                 console.error("❌ Aucun mesh chargé !");
                 return;
             }
+            
 
-            this.playerMesh = result.meshes.find(mesh => mesh.name.toLowerCase().includes("corps")) as Mesh || result.meshes[1] as Mesh;
+            //this.playerMesh = result.meshes.find(mesh => mesh.name.toLowerCase().includes("corps_Sphere_primitive0")) as Mesh || result.meshes[1] as Mesh;
+            this.playerRoot = new TransformNode("playerRoot", this.scene);
+            result.meshes.forEach(mesh => {
+                if (mesh.name.startsWith("corps_Sphere")) {
+                    mesh.parent = this.playerRoot;
+                }
+            });
+            this.playerMesh = this.playerRoot as unknown as Mesh;
+
 
             if (!this.playerMesh) {
                 console.error("❌ Erreur : Aucun mesh valide trouvé pour le joueur !");
@@ -68,7 +90,7 @@ export class Player {
             console.log("🛠 Mesh sélectionné :", this.playerMesh.name);
 
             this.playerMesh.scaling = new Vector3(1.5, 1.5, 1.5);
-            this.playerMesh.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
+            this.playerMesh.rotationQuaternion = Quaternion.FromEulerAngles(Math.PI / 2, Math.PI, 0);//Math.PI / 2, Math.PI, 0
 
             this.physicsCapsule = MeshBuilder.CreateCapsule("playerCapsule", {
                 height: 8,
