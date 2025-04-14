@@ -116,6 +116,13 @@ export class Player {
         });
     }
 
+    stopMovement() {
+        if (this.physics) {
+            this.physics.body.setLinearVelocity(Vector3.Zero()); // Arrête tout mouvement
+            this.physics.body.setAngularVelocity(Vector3.Zero()); // Arrête toute rotation
+        }
+    }
+
     public checkForObstacles(followCamera: FollowCamera, currentlyInvisibleWall: Mesh | null): Mesh | null {
         const cameraPosition = followCamera.position;
         if (!this.physicsCapsule) {

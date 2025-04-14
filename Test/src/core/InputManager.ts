@@ -29,8 +29,12 @@ export function setupControls(player: Player) {
 
     window.addEventListener("keyup", (event) => {
         switch (event.key.toLowerCase()) {
-            case "z": inputStates.forward = false; break;
-            case "s": inputStates.backward = false; break;
+            case "z":
+            case "s":
+                inputStates.forward = false;
+                inputStates.backward = false;
+                playerPhysics.body.setLinearVelocity(new Vector3(0, playerPhysics.body.getLinearVelocity().y, 0)); // Stop movement immediately
+                break;
             case "q": inputStates.left = false; break;
             case "d": inputStates.right = false; break;
             case " ": inputStates.jump = false; break;

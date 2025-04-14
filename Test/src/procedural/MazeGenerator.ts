@@ -38,13 +38,73 @@ export class MazeGenerator {
         }
     }
 
-    static generate() {
-        const maze: string[] = Array(51).fill(null).map(() => Array(51).fill("1").join(''));
-        const visited: boolean[][] = Array(51).fill(null).map(() => Array(51).fill(false));
+    private static clearArea(maze: string[], centerRow: number, centerCol: number, radius: number) {
+        for (let dz = -radius; dz <= radius; dz++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const row = centerRow + dz;
+                const col = centerCol + dx;
+                if (row >= 0 && row < maze.length && col >= 0 && col < maze[0].length) {
+                    maze[row] = maze[row].substring(0, col) + "0" + maze[row].substring(col + 1);
+                }
+            }
+        }
+    }
 
-        const startRow = 1;
-        const startCol = 1;
-        this.carvePath(startRow, startCol, maze, visited);
+    static spawnZones: { playerStart: Vector3, collectibles: Vector3[] } = {
+        playerStart: new Vector3(0, 0, 0),
+        collectibles: []
+    };
+
+    static generate() {
+        const mazeSize = 51;
+        const maze: string[] = Array(mazeSize).fill(null).map(() => Array(mazeSize).fill("1").join(''));
+        const visited: boolean[][] = Array(mazeSize).fill(null).map(() => Array(mazeSize).fill(false));
+
+        // 🔹 Réserver une zone de départ au centre du labyrinthe (3x3)
+        const centerRow = Math.floor(mazeSize / 2);
+        const centerCol = Math.floor(mazeSize / 2);
+        this.clearArea(maze, centerRow, centerCol, 1); // 3x3 zone dégagée
+
+        this.spawnZones.playerStart = new Vector3(
+            centerCol * this.cellSize - (maze[0].length * this.cellSize) / 2,
+            1,
+            centerRow * this.cellSize - (maze.length * this.cellSize) / 2
+        );
+
+        // 🔹 Réserver 3 zones aléatoires pour les collectibles
+        const collectibleZones: { row: number, col: number }[] = [];
+        const minDistanceBetweenZones = 6; // Minimum distance between clear areas
+
+        while (collectibleZones.length < 3) {
+            const row = Math.floor(Math.random() * (mazeSize / 2)) * 2 + 1;
+            const col = Math.floor(Math.random() * (mazeSize / 2)) * 2 + 1;
+
+            const tooClose = collectibleZones.some(z => 
+                Math.abs(z.row - row) < minDistanceBetweenZones && Math.abs(z.col - col) < minDistanceBetweenZones
+            );
+
+            if (!tooClose) {
+                this.clearArea(maze, row, col, 1); // Reserve a 3x3 area
+                collectibleZones.push({ row, col });
+            }
+        }
+
+        this.spawnZones.collectibles = collectibleZones.map(({ row, col }) =>
+            new Vector3(
+                col * this.cellSize - (maze[0].length * this.cellSize) / 2,
+                1,
+                row * this.cellSize - (maze.length * this.cellSize) / 2
+            )
+        );
+
+        this.carvePath(centerRow, centerCol, maze, visited);
+
+        // 🔹 Ajouter des murs autour du labyrinthe
+        for (let i = 0; i < mazeSize; i++) {
+            maze[0] = maze[0].substring(0, i) + "1" + maze[0].substring(i + 1);
+            maze[mazeSize - 1] = maze[mazeSize - 1].substring(0, i) + "1" + maze[mazeSize - 1].substring(i + 1);
+            maze[i] = "1" + maze[i].substring(1, maze[i].length - 1) + "1";
+        }
 
         this.mazeGrid = maze;
     }
