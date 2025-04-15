@@ -78,7 +78,7 @@ export class Level1 {
         this.spawnEnemies();
 
         // Création du PNJ à partir de sa propre classe
-        this.pnj = new PNJ(this.scene, new Vector3(0, 1.5, 0));
+        this.pnj = new PNJ(this.scene, new Vector3(0, 0, 0));
 
         setupControls(this.player);
 
@@ -213,7 +213,7 @@ export class Level1 {
             while (spawnedInArea < 3) {
                 const offsetX = Math.random() * 4 - 2;
                 const offsetZ = Math.random() * 4 - 2;
-                const spawnPosition = new Vector3(collectiblePos.x + offsetX, 1.5, collectiblePos.z + offsetZ);
+                const spawnPosition = new Vector3(collectiblePos.x + offsetX, 6.2, collectiblePos.z + offsetZ);
 
                 const isTooCloseToOtherEnemies = this.enemies.some((enemy) => {
                     const enemyMesh = enemy.getMesh();

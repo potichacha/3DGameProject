@@ -1,31 +1,28 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion,MeshBuilder } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
     private scene: Scene;
-    private mesh: AbstractMesh | null = null; // Permet d'assigner null après suppression
+    private mesh: AbstractMesh | null = null;
     private health: number;
-    private lastShotTime: number = 0; // Temps du dernier tir
+    private lastShotTime: number = 0;
 
     constructor(scene: Scene, position: Vector3, health: number) {
         this.scene = scene;
         this.health = health;
 
-        // 📌 Création de l'ennemi (capsule rouge)
-        this.mesh = MeshBuilder.CreateCapsule("enemyCapsule", {
-            height: 4, // Réduction de la hauteur
-            radius: 2, // Réduction du rayon
-        }, this.scene);
-        this.mesh.position = new Vector3(position.x, 1.5, position.z); // Forcer Y à 1.5 pour élever les ennemis
-        this.mesh.rotationQuaternion = Quaternion.Identity();
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "3d-crayon/source/Crayon 3D.glb", this.scene).then((result) => {
+            //const rootMesh = result.meshes[0];
+            this.mesh = result.meshes[0];
+            this.mesh.position = new Vector3(position.x, position.y, position.z);
+            this.mesh.rotationQuaternion = Quaternion.Identity();
 
-        // 📌 Matériau rouge pour l'ennemi
-        const material = new StandardMaterial("enemyMat", this.scene);
-        material.diffuseColor = Color3.Red();
-        this.mesh.material = material;
+            // Si besoin tu peux ajuster le scale ici :
+            this.mesh.scaling= new Vector3(10, 10, 10); // facultatif
 
-        // 📌 Ajouter la physique (capsule physique)
-        new PhysicsAggregate(this.mesh, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);
+            // Physique
+            new PhysicsAggregate(this.mesh, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);
+        });
     }
 
     getMesh() {
@@ -39,11 +36,9 @@ export class Enemy {
     reduceHealth(amount: number) {
         this.health = Math.max(0, this.health - amount);
         console.log(`👾 Ennemi touché ! Santé restante : ${this.health}`);
-        if (this.health <= 0) {
-            if (this.mesh) {
-                this.mesh.dispose(); // Supprime l'ennemi de la scène
-                this.mesh = null; // Empêche toute interaction future avec cet ennemi
-            }
+        if (this.health <= 0 && this.mesh) {
+            this.mesh.dispose();
+            this.mesh = null;
             console.log("👾 Ennemi éliminé !");
         }
     }

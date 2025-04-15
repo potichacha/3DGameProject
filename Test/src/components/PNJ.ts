@@ -1,28 +1,29 @@
-import { Scene, MeshBuilder, StandardMaterial, Vector3, Color3, Mesh } from "@babylonjs/core";
+import { Scene, MeshBuilder, StandardMaterial, Vector3, Color3, Mesh, SceneLoader } from "@babylonjs/core";
 
 export class PNJ {
     private scene: Scene;
-    private mesh: Mesh;
+    private mesh: Mesh | null = null;
 
     constructor(scene: Scene, position: Vector3) {
         this.scene = scene;
 
-        this.mesh = MeshBuilder.CreateSphere("pnj", { diameter: 2 }, this.scene);
-        this.mesh.position = position;
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "armor_cat.glb", this.scene).then((result) => {
+            console.log("🔍 PNJ importés :", result.meshes);
 
-        const material = new StandardMaterial("pnjMat", this.scene);
-        material.diffuseColor = new Color3(0, 0, 1);
-        this.mesh.material = material;
+            this.mesh = result.meshes[0] as Mesh;
+            this.mesh.position = position;
+            this.mesh.scaling = new Vector3(.1, .1, .1);
 
-        this.mesh.checkCollisions = false;
+            this.mesh.checkCollisions = false;
+        });
     }
 
-    public getMesh(): Mesh {
+    public getMesh(): Mesh | null {
         return this.mesh;
     }
 
-    public getPosition(): Vector3 {
-        return this.mesh.position;
+    public getPosition(): Vector3 | null {
+        return this.mesh?.position ?? null;
     }
 
     public enableInteraction(onInteract: () => void) {
@@ -42,19 +43,17 @@ export class PNJ {
         document.body.appendChild(interactionHint);
 
         this.scene.onBeforeRenderObservable.add(() => {
+            if (!this.mesh) return; // 🔐 Empêche les erreurs tant que le mesh n'est pas chargé
+
             const playerPos = this.scene.getMeshByName("playerCapsule")?.position;
             if (!playerPos) return;
 
             const distance = Vector3.Distance(playerPos, this.mesh.position);
-            if (distance < 4) {
-                interactionHint.style.display = "block";
-            } else {
-                interactionHint.style.display = "none";
-            }
+            interactionHint.style.display = distance < 4 ? "block" : "none";
         });
 
         window.addEventListener("keydown", (event) => {
-            if (event.key.toLowerCase() === "e") {
+            if (event.key.toLowerCase() === "e" && this.mesh) {
                 const playerPos = this.scene.getMeshByName("playerCapsule")?.position;
                 if (!playerPos) return;
 
@@ -64,7 +63,7 @@ export class PNJ {
                     interactionHint.style.display = "none";
                     if (onInteract) {
                         console.log("✅ Appel de la fonction onInteract.");
-                        onInteract(); // Appelle la fonction passée en paramètre
+                        onInteract();
                     } else {
                         console.error("❌ La fonction onInteract n'est pas définie.");
                     }

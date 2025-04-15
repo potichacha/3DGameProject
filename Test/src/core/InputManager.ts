@@ -2,7 +2,7 @@ import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 import { Player } from "../components/Player";
 
-const MOVE_SPEED = 10; // Réduit la vitesse de déplacement pour un contrôle plus fluide
+const MOVE_SPEED = 15; // Réduit la vitesse de déplacement pour un contrôle plus fluide
 const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
 
 export function setupControls(player: Player) {
@@ -19,7 +19,9 @@ export function setupControls(player: Player) {
 
     window.addEventListener("keydown", (event) => {
         switch (event.key.toLowerCase()) {
-            case "s": inputStates.backward = true; break; // Avancer
+            case "s": inputStates.backward = true; 
+            
+            player.getAnimationGroups()[1].play(true);break; // Avancer
             case "z": inputStates.forward = true; break; // Reculer
             case "q": inputStates.left = true; break; // Tourner à gauche
             case "d": inputStates.right = true; break; // Tourner à droite
@@ -30,6 +32,7 @@ export function setupControls(player: Player) {
     window.addEventListener("keyup", (event) => {
         switch (event.key.toLowerCase()) {
             case "z":
+                player.getAnimationGroups()[1].play(false);
             case "s":
                 inputStates.forward = false;
                 inputStates.backward = false;
@@ -66,11 +69,11 @@ export function setupControls(player: Player) {
 
         if (inputStates.backward) {
             newVelocity = forwardVector.scale(MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
-            //player.getAnimationGroups()[1].play(true); // Joue l'animation de marche
             moving = true;
         }
         if (inputStates.forward) {
             newVelocity = forwardVector.scale(-MOVE_SPEED).add(new Vector3(0, newVelocity.y, 0));
+            player.getAnimationGroups()[1].play(true); // Joue l'animation de marche
             moving = true;
         }
 
