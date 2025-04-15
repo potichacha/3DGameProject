@@ -51,7 +51,7 @@ export class Player {
     }
 
     private createMesh(startPosition: Vector3) {
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "sinj31.glb", this.scene).then((result) => {//finaleSinj
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "sinj.glb", this.scene).then((result) => {//finaleSinj
             console.log("🔍 Meshes importés :", result.meshes);
             console.log("🔍 Meshes importés :", result);
 
