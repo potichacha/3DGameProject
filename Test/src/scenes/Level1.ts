@@ -30,6 +30,8 @@ export class Level1 {
     private dialogManager!: DialogManager;
     private pnj!: PNJ;
     private endPoint!: Mesh;
+    private isDialogActive: boolean = false;
+    private hasTalkedToPNJ: boolean = false;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
@@ -84,7 +86,7 @@ export class Level1 {
 
         this.dialogManager.initIntroDialog(this.scene, this.pnj, this.hud, () => {
             this.missionManager.setMission("Talk to the PNJ");
-            this.pnj.enableInteraction(() => this.completeTalkToPNJMission());
+            this.pnj.enableInteraction(() => this.handlePNJInteraction(), () => this.isDialogActive);
         });
 
         this.updateScene();
@@ -171,12 +173,36 @@ export class Level1 {
         this.projectiles.push(projectile);
     }
 
+    private updateHUDForMission() {
+        const currentMission = this.missionManager.getCurrentName();
+
+        if (currentMission === "Talk to the PNJ") {
+            const pnjpos = this.pnj.getPosition();
+            console.log("PNJ Position:", pnjpos); // Log pour vérifier la position
+            const distanceToPNJ = Vector3.Distance(this.player.getCapsulePosition(), this.pnj.getPosition());
+            this.hud.updateDistance(distanceToPNJ, "PNJ"); // ✅ On met à jour la distance À CHAQUE FRAME
+            this.hud.updateMission("Talk to the PNJ");
+            this.hud.showDistance();       
+        } else if (currentMission === "Collect the collectibles") {
+            const closestCollectible = this.getClosestCollectible();
+            if (closestCollectible) {
+                const distanceToCollectible = Vector3.Distance(this.player.getCapsulePosition(), closestCollectible.getPosition());
+                this.hud.updateDistance(distanceToCollectible, "Collectible le plus proche");
+            }
+            this.hud.showCollectiblesHUD(); // ✅ Affiche compteur + distance
+            this.hud.update(this.collectedCount, this.totalCollectibles);
+        }
+    }
+
     private updateScene() {
         this.scene.onBeforeRenderObservable.add(() => {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
             this.updateProjectiles();
             this.updateEnemies();
             this.music.playMusic();
+
+            // Met à jour le HUD en fonction de la mission
+            this.updateHUDForMission();
         });
     }
 
@@ -186,22 +212,48 @@ export class Level1 {
             this.hud.update(this.collectedCount, this.totalCollectibles);
 
             if (this.collectedCount === this.totalCollectibles) {
-                this.hud.hideCollectiblesHUD();
+                this.hud.hideCollectiblesHUD(); // Cache l'indicateur des collectibles
                 this.spawnEndZone();
             }
         }
     }
 
-    private completeTalkToPNJMission() {
-        console.log("✅ Mission 'Talk to the PNJ' terminée !");
-        console.log("La méthode completeTalkToPNJMission a été appelée.");
-        this.missionManager.clearMission();
+    private handlePNJInteraction() {
+        this.isDialogActive = true;
 
-        this.dialogManager.startPNJDialog([
-            "Bonjour, étranger. Vous êtes perdu ?",
-            "Collectez les objets pour sortir.",
-            "Bonne chance !"
-        ]);
+        if (!this.hasTalkedToPNJ) {
+            this.dialogManager.startPNJDialog([
+                "Bonjour, étranger. Vous êtes perdu ?",
+                "Collectez les objets pour sortir.",
+                "Bonne chance !"
+            ], () => {
+                this.isDialogActive = false;
+                this.hasTalkedToPNJ = true;
+                this.missionManager.setMission("Collect the collectibles");
+            });
+        } else {
+            this.dialogManager.startPNJDialog([
+                "Allez, qu'est-ce que tu attends ?",
+                "Va chercher ces collectibles !"
+            ], () => {
+                this.isDialogActive = false;
+            });
+        }
+    }
+
+    private getClosestCollectible(): Collectible | null {
+        let closestCollectible: Collectible | null = null;
+        let minDistance = Infinity;
+
+        this.collectibles.forEach(collectible => {
+            const distance = Vector3.Distance(this.player.getCapsule().position, collectible.getPosition());
+            if (distance < minDistance && collectible.getPosition().length() > 0) {
+                minDistance = distance;
+                closestCollectible = collectible;
+            }
+        });
+
+        return closestCollectible;
     }
 
     private spawnEnemies() {
@@ -290,7 +342,7 @@ export class Level1 {
 
         this.scene.onBeforeRenderObservable.add(() => {
             const distanceToEndZone = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
-            this.hud.updateDistance(Math.round(distanceToEndZone));
+            this.hud.updateDistance(Math.round(distanceToEndZone), "Zone de fin"); // Ajout du label
         });
 
         window.addEventListener("keydown", (event) => {

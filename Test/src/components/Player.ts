@@ -31,6 +31,10 @@ export class Player {
         return this.physicsCapsule;
     }
 
+    getCapsulePosition(): Vector3 {
+        return this.physicsCapsule?.position.clone() || Vector3.Zero(); // Retourne une copie de la position
+    }
+
     getAnimationGroups() {
         return this.animationGroup;
     }

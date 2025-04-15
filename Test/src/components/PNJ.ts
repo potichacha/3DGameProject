@@ -26,7 +26,7 @@ export class PNJ {
         return this.mesh?.position ?? null;
     }
 
-    public enableInteraction(onInteract: () => void) {
+    public enableInteraction(onInteract: () => void, isDialogActive: () => boolean) {
         const interactionHint = document.createElement("div");
         interactionHint.style.position = "absolute";
         interactionHint.style.bottom = "50px";
@@ -46,7 +46,10 @@ export class PNJ {
             if (!this.mesh) return; // 🔐 Empêche les erreurs tant que le mesh n'est pas chargé
 
             const playerPos = this.scene.getMeshByName("playerCapsule")?.position;
-            if (!playerPos) return;
+            if (!playerPos || isDialogActive()) {
+                interactionHint.style.display = "none";
+                return;
+            }
 
             const distance = Vector3.Distance(playerPos, this.mesh.position);
             interactionHint.style.display = distance < 4 ? "block" : "none";
