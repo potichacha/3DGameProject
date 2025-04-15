@@ -14,6 +14,11 @@ app.use((req, res, next) => {
     next();
 });
 
+// Serve a default favicon to prevent 404 errors
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
