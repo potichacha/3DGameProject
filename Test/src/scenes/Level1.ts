@@ -471,7 +471,7 @@ export class Level1 {
 
     private loadLevel2() {
         console.log("🔄 Chargement du niveau 2...");
-        import("./Level2B").then(({ Level2 }) => { // Correction du chemin vers Level2B
+        import("./Level2").then(({ Level2 }) => { // Correction du chemin vers Level2B
             new Level2(this.scene, this.canvas); // Initialise le niveau 2
         }).catch((error) => {
             console.error("❌ Erreur lors du chargement du niveau 2 :", error);
