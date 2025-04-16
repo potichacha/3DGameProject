@@ -20,6 +20,7 @@ export class Level1 {
     private player!: Player;
     private followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
+    private topViewCamera!: FreeCamera; // Caméra vue du dessus
     private isFreeCamera: boolean = false;
     private collectibles: Collectible[] = [];
     private enemies: Enemy[] = [];
@@ -51,6 +52,11 @@ export class Level1 {
         this.scene.collisionsEnabled = true;
         new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
 
+        // Ajout d'un effet de brouillard
+        this.scene.fogMode = Scene.FOGMODE_EXP; // Utilise un brouillard exponentiel
+        this.scene.fogDensity = 0.02; // Contrôle la densité du brouillard (plus élevé = plus sombre)
+        this.scene.fogColor = new Color3(0, 0, 0); // Couleur du brouillard (noir pour une ambiance sombre)
+
         const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
         ground.checkCollisions = true;
@@ -71,6 +77,7 @@ export class Level1 {
 
         this.setupFollowCamera();
         this.setupFreeCamera();
+        this.setupTopViewCamera(); // Ajout de la caméra vue du dessus
         this.setupCameraSwitch();
         this.setupShooting();
 
@@ -126,10 +133,24 @@ export class Level1 {
         this.freeCamera.detachControl();
     }
 
+    private setupTopViewCamera() {
+        this.topViewCamera = new FreeCamera("TopViewCamera", new Vector3(0, 100, 0), this.scene);
+        this.topViewCamera.setTarget(new Vector3(0, 0, 0)); // Regarde vers le bas
+        this.topViewCamera.mode = FreeCamera.ORTHOGRAPHIC_CAMERA; // Vue orthographique pour un effet "carte"
+        this.topViewCamera.attachControl(this.canvas, true);
+        this.topViewCamera.detachControl(); // Par défaut, elle n'est pas active
+    }
+
     private setupCameraSwitch() {
         this.scene.onKeyboardObservable.add((kbInfo) => {
-            if (kbInfo.type === KeyboardEventTypes.KEYDOWN && kbInfo.event.key.toLowerCase() === "c") {
-                this.toggleFreeCamera();
+            if (kbInfo.type === KeyboardEventTypes.KEYDOWN) {
+                if (kbInfo.event.key.toLowerCase() === "c") {
+                    this.toggleFreeCamera();
+                } else if (kbInfo.event.key.toLowerCase() === "v") {
+                    this.switchToTopViewCamera();
+                }
+            } else if (kbInfo.type === KeyboardEventTypes.KEYUP && kbInfo.event.key.toLowerCase() === "v") {
+                this.switchToFollowCamera();
             }
         });
     }
@@ -143,6 +164,22 @@ export class Level1 {
         } else {
             this.scene.activeCamera = this.followCamera;
             this.freeCamera.detachControl();
+        }
+    }
+
+    private switchToTopViewCamera() {
+        if (this.topViewCamera) {
+            this.scene.activeCamera = this.topViewCamera;
+            this.topViewCamera.position = this.player.getCapsule().position.add(new Vector3(0, 100, 0)); // Suit le joueur
+            this.topViewCamera.setTarget(this.player.getCapsule().position); // Regarde le joueur
+            this.topViewCamera.attachControl();
+        }
+    }
+
+    private switchToFollowCamera() {
+        if (this.followCamera) {
+            this.scene.activeCamera = this.followCamera;
+            this.followCamera.attachControl();
         }
     }
 
@@ -434,7 +471,7 @@ export class Level1 {
 
     private loadLevel2() {
         console.log("🔄 Chargement du niveau 2...");
-        import("./Level2").then(({ Level2 }) => {
+        import("./Level2B").then(({ Level2 }) => { // Correction du chemin vers Level2B
             new Level2(this.scene, this.canvas); // Initialise le niveau 2
         }).catch((error) => {
             console.error("❌ Erreur lors du chargement du niveau 2 :", error);
