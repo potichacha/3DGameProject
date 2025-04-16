@@ -83,8 +83,16 @@ export function setupControls(player: Player) {
 
         body.setLinearVelocity(newVelocity);
 
-        if (inputStates.jump && Math.abs(body.getLinearVelocity().y) < 0.05) {
-            body.applyImpulse(new Vector3(0, 10, 0), transformNode.getAbsolutePosition());
+        // ✅ Gestion du saut
+        if (inputStates.jump) {
+            const verticalVelocity = body.getLinearVelocity().y;
+            console.log(`🔍 Vitesse verticale actuelle : ${verticalVelocity}`);
+            if (Math.abs(verticalVelocity) < 0.05) {
+                console.log("🛫 Saut déclenché !");
+                body.applyImpulse(new Vector3(0, 10, 0), transformNode.getAbsolutePosition());
+            } else {
+                console.log("⛔ Saut bloqué : le joueur est déjà en l'air.");
+            }
         }
     });
 }

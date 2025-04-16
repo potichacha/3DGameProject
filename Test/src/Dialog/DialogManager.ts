@@ -6,6 +6,8 @@ export class DialogManager {
     private dialogBox: HTMLElement;
     private intervalId: number | null = null;
     private scene: Scene;
+    private introRead: boolean = false;
+    private introComplete: boolean = false;
 
     constructor(scene: Scene) {
         this.scene = scene;
@@ -89,17 +91,24 @@ export class DialogManager {
         this.dialogBox.style.display = "none";
     }
 
-    public initIntroDialog(scene: Scene, pnj: PNJ, hud: HUD, onComplete: () => void) {
-        this.showDialog(
-            [
-                "Hmm... Où suis-je ?",
-                "Tout semble si étrange... Ces murs, ce silence...",
-                "On dirait un labyrinthe géant. Mais pourquoi suis-je ici ?",
-                "Oh, attends... Je vois quelqu'un au loin.",
-                "Peut-être qu'il pourra m'aider à comprendre ce qui se passe."
-            ],
-            onComplete
-        );
+    public initIntroDialog(scene: Scene, pnj: PNJ, hud: HUD, onFinished: () => void) {
+        const introLines = [
+            "Bienvenue dans le rêve de l'étudiant...",
+            "Explore le labyrinthe et parle à l'inconnu.",
+        ];
+
+        // Désactive l'interaction avec le PNJ pendant l'intro
+        pnj.disableInteraction();
+
+        this.startPNJDialog(introLines, () => {
+            this.introComplete = true; // Marque l'intro comme terminée
+            pnj.enableInteraction(() => console.log("Interaction activée"), () => false); // Réactive l'interaction avec le PNJ
+            onFinished(); // Appelle le callback pour déclencher la suite
+        });
+    }
+
+    public hasSeenIntro(): boolean {
+        return this.introComplete;
     }
 
     public startPNJDialog(lines: string[], onComplete: () => void) {

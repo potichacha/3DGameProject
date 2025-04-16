@@ -1,8 +1,11 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture } from "@babylonjs/core";
+import {
+    Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight,
+    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture
+} from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
-import { MazeGenerator, isWallPosition } from "../procedural/MazeGenerator";
+import { MazeGenerator } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
 import { Enemy } from "../components/Enemy";
@@ -13,21 +16,20 @@ import { MissionManager } from "../core/MissionManager";
 
 export class Level1 {
     private scene: Scene;
-    private canvas!: HTMLCanvasElement;
+    private canvas: HTMLCanvasElement;
     private player!: Player;
     private followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
     private isFreeCamera: boolean = false;
     private collectibles: Collectible[] = [];
     private enemies: Enemy[] = [];
-    private hud!: HUD;
+    private hud: HUD;
     private collectedCount: number = 0;
     private totalCollectibles: number = 3;
-    private lastInvisibleWall: Mesh | null = null;
     private projectiles: Mesh[] = [];
-    private music!: Music;
-    private missionManager!: MissionManager;
-    private dialogManager!: DialogManager;
+    private music: Music;
+    private missionManager: MissionManager;
+    private dialogManager: DialogManager;
     private pnj!: PNJ;
     private endPoint!: Mesh;
     private isDialogActive: boolean = false;
@@ -79,12 +81,13 @@ export class Level1 {
 
         this.spawnEnemies();
 
-        // Création du PNJ à partir de sa propre classe
         this.pnj = new PNJ(this.scene, new Vector3(0, 0, 0));
 
         setupControls(this.player);
 
+        // Initialise le dialogue d'intro
         this.dialogManager.initIntroDialog(this.scene, this.pnj, this.hud, () => {
+            // Appelé uniquement après la fin de l'intro
             this.missionManager.setMission("Talk to the PNJ");
             this.pnj.enableInteraction(() => this.handlePNJInteraction(), () => this.isDialogActive);
         });
@@ -173,36 +176,60 @@ export class Level1 {
         this.projectiles.push(projectile);
     }
 
-    private updateHUDForMission() {
-        const currentMission = this.missionManager.getCurrentName();
+    private updateGameStateAndHUD() {
+        const playerPosition = this.player.getCapsulePosition();
 
-        if (currentMission === "Talk to the PNJ") {
-            const pnjpos = this.pnj.getPosition();
-            console.log("PNJ Position:", pnjpos); // Log pour vérifier la position
-            const distanceToPNJ = Vector3.Distance(this.player.getCapsulePosition(), this.pnj.getPosition());
-            this.hud.updateDistance(distanceToPNJ, "PNJ"); // ✅ On met à jour la distance À CHAQUE FRAME
-            this.hud.updateMission("Talk to the PNJ");
-            this.hud.showDistance();       
-        } else if (currentMission === "Collect the collectibles") {
-            const closestCollectible = this.getClosestCollectible();
-            if (closestCollectible) {
-                const distanceToCollectible = Vector3.Distance(this.player.getCapsulePosition(), closestCollectible.getPosition());
-                this.hud.updateDistance(distanceToCollectible, "Collectible le plus proche");
-            }
-            this.hud.showCollectiblesHUD(); // ✅ Affiche compteur + distance
-            this.hud.update(this.collectedCount, this.totalCollectibles);
+        if (!this.dialogManager.hasSeenIntro()) {
+            // Pas encore vu l’intro : ne rien afficher
+            this.hud.hideCounter();
+            this.hud.hideDistance();
+            this.hud.updateMission("");
+            return;
         }
+
+        if (!this.hasTalkedToPNJ) {
+            const pnjPosition = this.pnj.getPosition();
+            if (pnjPosition && playerPosition) {
+                const dist = Vector3.Distance(playerPosition, pnjPosition);
+                this.hud.updateMission("Parler à l'inconnu");
+                this.hud.updateDistance(dist, "PNJ");
+                this.hud.showDistance();
+                this.hud.hideCounter();
+            }
+            return;
+        }
+
+        if (this.collectedCount < this.totalCollectibles) {
+            const closest = this.getClosestCollectible();
+            if (closest && playerPosition) {
+                const dist = Vector3.Distance(playerPosition, closest.getPosition());
+                this.hud.updateMission("Collecter les collectibles");
+                this.hud.updateDistance(dist, "Collectible le plus proche");
+                this.hud.showCollectiblesHUD();
+                this.hud.update(this.collectedCount, this.totalCollectibles);
+            }
+            return;
+        }
+
+        // Tous les collectibles récupérés
+        if (!this.endPoint) {
+            this.spawnEndZone(); // La zone est créée ici dynamiquement
+        }
+
+        const distToEnd = Vector3.Distance(playerPosition, this.endPoint.position);
+        this.hud.updateMission("Aller à la zone de fin");
+        this.hud.updateDistance(distToEnd, "Zone de fin");
+        this.hud.showDistance();
+        this.hud.hideCounter();
     }
 
     private updateScene() {
         this.scene.onBeforeRenderObservable.add(() => {
+            this.updateGameStateAndHUD(); // Remplace updateHUDForMission
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
             this.updateProjectiles();
             this.updateEnemies();
             this.music.playMusic();
-
-            // Met à jour le HUD en fonction de la mission
-            this.updateHUDForMission();
         });
     }
 
@@ -212,7 +239,7 @@ export class Level1 {
             this.hud.update(this.collectedCount, this.totalCollectibles);
 
             if (this.collectedCount === this.totalCollectibles) {
-                this.hud.hideCollectiblesHUD(); // Cache l'indicateur des collectibles
+                this.hud.hideCollectiblesHUD();
                 this.spawnEndZone();
             }
         }
@@ -220,7 +247,6 @@ export class Level1 {
 
     private handlePNJInteraction() {
         this.isDialogActive = true;
-
         if (!this.hasTalkedToPNJ) {
             this.dialogManager.startPNJDialog([
                 "Bonjour, étranger. Vous êtes perdu ?",
@@ -242,82 +268,77 @@ export class Level1 {
     }
 
     private getClosestCollectible(): Collectible | null {
-        let closestCollectible: Collectible | null = null;
+        let closest: Collectible | null = null;
         let minDistance = Infinity;
 
-        this.collectibles.forEach(collectible => {
-            const distance = Vector3.Distance(this.player.getCapsule().position, collectible.getPosition());
-            if (distance < minDistance && collectible.getPosition().length() > 0) {
-                minDistance = distance;
-                closestCollectible = collectible;
+        for (const collectible of this.collectibles) {
+            const dist = Vector3.Distance(this.player.getCapsule().position, collectible.getPosition());
+            if (dist < minDistance && collectible.getPosition().length() > 0) {
+                closest = collectible;
+                minDistance = dist;
             }
-        });
+        }
 
-        return closestCollectible;
+        return closest;
     }
 
     private spawnEnemies() {
         const minDistanceBetweenEnemies = 2;
 
         for (const collectiblePos of MazeGenerator.spawnZones.collectibles) {
-            let spawnedInArea = 0;
-
-            while (spawnedInArea < 3) {
+            let spawned = 0;
+            while (spawned < 3) {
                 const offsetX = Math.random() * 4 - 2;
                 const offsetZ = Math.random() * 4 - 2;
-                const spawnPosition = new Vector3(collectiblePos.x + offsetX, 6.2, collectiblePos.z + offsetZ);
+                const pos = new Vector3(collectiblePos.x + offsetX, 6.2, collectiblePos.z + offsetZ);
 
-                const isTooCloseToOtherEnemies = this.enemies.some((enemy) => {
-                    const enemyMesh = enemy.getMesh();
-                    if (!enemyMesh) return false;
-                    const distance = Vector3.Distance(enemyMesh.position, spawnPosition);
-                    return distance < minDistanceBetweenEnemies;
+                const tooClose = this.enemies.some(enemy => {
+                    const mesh = enemy.getMesh();
+                    return mesh && Vector3.Distance(mesh.position, pos) < minDistanceBetweenEnemies;
                 });
 
-                if (!isTooCloseToOtherEnemies) {
-                    const enemy = new Enemy(this.scene, spawnPosition, 100);
+                if (!tooClose) {
+                    const enemy = new Enemy(this.scene, pos, 100);
                     this.enemies.push(enemy);
-                    spawnedInArea++;
+                    spawned++;
                 }
             }
         }
     }
 
     private updateEnemies() {
-        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
-
-        this.enemies.forEach((enemy) => {
-            const enemyMesh = enemy.getMesh();
-            if (!enemyMesh) return;
-            const directionToPlayer = this.player.getCapsule().position.subtract(enemyMesh.position).normalize();
-            const ray = new Ray(enemyMesh.position, directionToPlayer);
-            const hit = this.scene.pickWithRay(ray, (mesh) => mesh === this.player.getCapsule());
+        const delta = this.scene.getEngine().getDeltaTime() / 1000;
+        for (const enemy of this.enemies) {
+            const mesh = enemy.getMesh();
+            if (!mesh) continue;
+            const dirToPlayer = this.player.getCapsule().position.subtract(mesh.position).normalize();
+            const ray = new Ray(mesh.position, dirToPlayer);
+            const hit = this.scene.pickWithRay(ray, m => m === this.player.getCapsule());
             if (hit && hit.pickedMesh) {
                 enemy.shootAtPlayer(this.scene, this.player.getCapsule().position);
             }
-        });
+        }
     }
 
     private updateProjectiles() {
-        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
+        const delta = this.scene.getEngine().getDeltaTime() / 1000;
 
-        this.projectiles = this.projectiles.filter((projectile) => {
-            if (!projectile) return false;
-            const velocity = projectile.metadata.velocity;
-            projectile.position.addInPlace(velocity.scale(deltaTime));
+        this.projectiles = this.projectiles.filter(proj => {
+            if (!proj) return false;
+            const velocity = proj.metadata.velocity;
+            proj.position.addInPlace(velocity.scale(delta));
 
             for (const enemy of this.enemies) {
-                const enemyMesh = enemy.getMesh();
-                if (!enemyMesh) return false;
-                if (enemyMesh.intersectsMesh(projectile, false)) {
+                const mesh = enemy.getMesh();
+                if (mesh && mesh.intersectsMesh(proj, false)) {
                     enemy.reduceHealth(50);
-                    projectile.dispose();
+                    proj.dispose();
                     return false;
                 }
             }
 
-            if (projectile.position.length() > 1000) {
-                projectile.dispose();
+            if (proj.position.length() > 1000) {
+                proj.dispose();
                 return false;
             }
 
@@ -327,28 +348,23 @@ export class Level1 {
 
     private spawnEndZone() {
         this.endPoint = MeshBuilder.CreateDisc("endZone", { radius: 5 }, this.scene);
-        this.endPoint.position = new Vector3(0, 0.1, 0);
+        const randomValidPos = MazeGenerator.getRandomEmptyPosition(); // Nouvelle méthode
+        this.endPoint.position = new Vector3(randomValidPos.x, 0.1, randomValidPos.z);
 
-        const material = new StandardMaterial("endZoneMat", this.scene);
-        material.diffuseColor = new Color3(0, 1, 0);
-        this.endPoint.material = material;
-
+        const mat = new StandardMaterial("endZoneMat", this.scene);
+        mat.diffuseColor = new Color3(0, 1, 0);
+        this.endPoint.material = mat;
         this.endPoint.isPickable = true;
 
-        if (this.scene.activeCamera) {
-            const activeCamera = this.scene.activeCamera as FollowCamera;
-            activeCamera.setTarget(this.endPoint.position);
-        }
-
         this.scene.onBeforeRenderObservable.add(() => {
-            const distanceToEndZone = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
-            this.hud.updateDistance(Math.round(distanceToEndZone), "Zone de fin"); // Ajout du label
+            const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
+            this.hud.updateDistance(Math.round(dist), "Zone de fin");
         });
 
         window.addEventListener("keydown", (event) => {
             if (event.key.toLowerCase() === "e") {
-                const distanceToEndZone = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
-                if (distanceToEndZone < 5) {
+                const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
+                if (dist < 5) {
                     console.log("🎉 Niveau terminé !");
                     this.endLevel();
                 }

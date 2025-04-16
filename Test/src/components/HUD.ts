@@ -1,4 +1,4 @@
-    export class HUD {
+export class HUD {
         private counterElement: HTMLElement;
         private missionElement: HTMLElement;
         private distanceElement: HTMLElement;
@@ -62,7 +62,13 @@
         }
 
         updateDistance(distance: number, label: string) {
+            console.log(`🔄 Mise à jour de la distance dans le HUD : ${label} - ${distance.toFixed(1)}m`);
             this.distanceElement.innerText = `${label}: ${distance.toFixed(1)}m`;
+
+            // Vérification si l'élément HTML est bien mis à jour
+            if (this.distanceElement.innerText !== `${label}: ${distance.toFixed(1)}m`) {
+                console.error("❌ Échec de la mise à jour de l'élément distance dans le HUD !");
+            }
         }
 
         updatePlayerHealth(health: number) {

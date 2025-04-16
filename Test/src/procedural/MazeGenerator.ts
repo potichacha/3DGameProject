@@ -150,6 +150,21 @@ export class MazeGenerator {
 
         return this.mazeGrid[gridZ] !== undefined && this.mazeGrid[gridZ][gridX] === "1";
     }
+
+    static getRandomEmptyPosition(): Vector3 {
+        while (true) {
+            const row = Math.floor(Math.random() * this.mazeGrid.length);
+            const col = Math.floor(Math.random() * this.mazeGrid[0].length);
+
+            if (this.mazeGrid[row][col] === "0") {
+                return new Vector3(
+                    col * this.cellSize - (this.mazeGrid[0].length * this.cellSize) / 2,
+                    0,
+                    row * this.cellSize - (this.mazeGrid.length * this.cellSize) / 2
+                );
+            }
+        }
+    }
 }
 
 // ✅ Assure-toi que la fonction est bien exportée
