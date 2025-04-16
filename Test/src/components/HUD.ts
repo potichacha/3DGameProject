@@ -109,10 +109,22 @@ export class HUD {
             this.missionElement.innerText = `Mission: ${mission}`;
         }
 
+        getCurrentMissionText() {
+            return this.missionElement.innerText;
+        }
+
         resetHUD() {
             this.update(0, 0); // Réinitialise le compteur des collectibles
             this.updateDistance(0, ""); // Réinitialise la distance
             this.updateMission(""); // Réinitialise la mission
             this.hideCollectiblesHUD(); // Cache les collectibles
         }
-    }
+
+        removeDOMElements() {
+            console.log("Removing HUD DOM elements...");
+            this.counterElement?.remove();
+            this.missionElement?.remove();
+            this.distanceElement?.remove();
+            this.healthBarContainer?.remove();
+        }
+}
