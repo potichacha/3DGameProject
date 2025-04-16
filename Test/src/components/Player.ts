@@ -105,11 +105,22 @@ export class Player {
             this.physicsCapsule.rotationQuaternion = Quaternion.Identity();
 
             this.physics = new PhysicsAggregate(this.physicsCapsule, PhysicsShapeType.CAPSULE, {
-                mass: 5,
-                restitution: 0,
+                mass: 5, // Assurez-vous que la masse est suffisante pour réagir aux forces
+                restitution: 0.2, // Ajout d'un léger rebond pour le réalisme
                 friction: 0.8
             }, this.scene);
             this.physics.body.setMotionType(PhysicsMotionType.DYNAMIC);
+
+            // ✅ Ajout d'une limite pour éviter que le joueur ne glisse
+            this.physics.body.setLinearDamping(0.1); // Réduit la vitesse progressivement
+            this.physics.body.setAngularDamping(0.1); // Réduit la rotation progressivement
+
+            // ✅ Suppression des appels incorrects
+            console.log("🔍 Propriétés physiques de la capsule configurées :", {
+                mass: 5,
+                restitution: 0.2,
+                friction: 0.8
+            });
 
             this.physics.body.setMassProperties({
                 inertia: new Vector3(0, 1, 0),
