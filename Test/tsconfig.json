@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es6", // Support moderne pour la plupart des navigateurs
-    "lib": ["dom", "es6"], // Nécessaire pour travailler avec le DOM et ES6
+    "target": "es2016", // Support moderne pour la plupart des navigateurs
+    "lib": ["dom", "es2016"], // Nécessaire pour travailler avec le DOM et ES6
     "module": "esnext", // Compatible avec Vite et la syntaxe moderne
     "moduleResolution": "node", // Résolution des modules pour les imports Node.js
     "strict": true, // Active toutes les vérifications strictes pour un code robuste
