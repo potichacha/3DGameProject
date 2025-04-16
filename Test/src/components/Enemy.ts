@@ -1,9 +1,10 @@
-import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion,MeshBuilder } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
     private scene: Scene;
     private mesh: AbstractMesh | null = null;
+    private capsule: AbstractMesh | null = null; // Capsule physique de l'ennemi
     private health: number;
     private lastShotTime: number = 0;
 
@@ -12,16 +13,16 @@ export class Enemy {
         this.health = health;
 
         SceneLoader.ImportMeshAsync("", "./src/assets/models/", "3d-crayon/source/Crayon 3D.glb", this.scene).then((result) => {
-            //const rootMesh = result.meshes[0];
             this.mesh = result.meshes[0];
-            this.mesh.position = new Vector3(position.x, position.y, position.z);
+            this.mesh.position = position;
             this.mesh.rotationQuaternion = Quaternion.Identity();
+            this.mesh.scaling = new Vector3(10, 10, 10);
 
-            // Si besoin tu peux ajuster le scale ici :
-            this.mesh.scaling= new Vector3(10, 10, 10); // facultatif
-
-            // Physique
-            new PhysicsAggregate(this.mesh, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);
+            // Ajout de la capsule physique
+            this.capsule = MeshBuilder.CreateCapsule("enemyCapsule", { height: 8, radius: 3.5 }, this.scene);
+            this.capsule.position = position;
+            this.capsule.visibility = 0; // Rendre la capsule invisible
+            new PhysicsAggregate(this.capsule, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);
         });
     }
 
@@ -29,17 +30,31 @@ export class Enemy {
         return this.mesh;
     }
 
+    getCapsule(): AbstractMesh | null {
+        return this.capsule;
+    }
+
     getHealth() {
         return this.health;
+    }
+
+    public dispose() {
+        if (this.mesh) {
+            this.mesh.dispose();
+            this.mesh = null;
+        }
+        if (this.capsule) {
+            this.capsule.dispose();
+            this.capsule = null;
+        }
+        console.log("👾 Ennemi complètement supprimé !");
     }
 
     reduceHealth(amount: number) {
         this.health = Math.max(0, this.health - amount);
         console.log(`👾 Ennemi touché ! Santé restante : ${this.health}`);
-        if (this.health <= 0 && this.mesh) {
-            this.mesh.dispose();
-            this.mesh = null;
-            console.log("👾 Ennemi éliminé !");
+        if (this.health <= 0) {
+            this.dispose(); // Supprime complètement l'ennemi
         }
     }
 
