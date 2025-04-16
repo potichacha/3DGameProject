@@ -247,6 +247,8 @@ export class Level1 {
 
     private handlePNJInteraction() {
         this.isDialogActive = true;
+        this.pnj.setVisible(false); // Masque le PNJ pendant le dialogue
+
         if (!this.hasTalkedToPNJ) {
             this.dialogManager.startPNJDialog([
                 "Bonjour, étranger. Vous êtes perdu ?",
@@ -254,6 +256,7 @@ export class Level1 {
                 "Bonne chance !"
             ], () => {
                 this.isDialogActive = false;
+                this.pnj.setVisible(true); // Réaffiche le PNJ après le dialogue
                 this.hasTalkedToPNJ = true;
                 this.missionManager.setMission("Collect the collectibles");
             });
@@ -263,6 +266,7 @@ export class Level1 {
                 "Va chercher ces collectibles !"
             ], () => {
                 this.isDialogActive = false;
+                this.pnj.setVisible(true); // Réaffiche le PNJ après le dialogue
             });
         }
     }
@@ -283,24 +287,47 @@ export class Level1 {
     }
 
     private spawnEnemies() {
-        const minDistanceBetweenEnemies = 2;
+        const minDistanceBetweenEnemies = 8; // Augmentation de la distance minimale entre les ennemis
+        const spawnRadius = 8; // Rayon autour du collectible pour le spawn aléatoire
+        const maxAttempts = 20; // Limite de tentatives pour éviter une boucle infinie
 
         for (const collectiblePos of MazeGenerator.spawnZones.collectibles) {
             let spawned = 0;
-            while (spawned < 3) {
-                const offsetX = Math.random() * 4 - 2;
-                const offsetZ = Math.random() * 4 - 2;
-                const pos = new Vector3(collectiblePos.x + offsetX, 6.2, collectiblePos.z + offsetZ);
+            const maxEnemiesPerZone = 3; // Nombre maximum d'ennemis par zone
+            const angleStep = (2 * Math.PI) / maxEnemiesPerZone; // Répartition uniforme en cercle
+            const baseAngle = Math.random() * 2 * Math.PI; // Angle de départ aléatoire
 
-                const tooClose = this.enemies.some(enemy => {
-                    const mesh = enemy.getMesh();
-                    return mesh && Vector3.Distance(mesh.position, pos) < minDistanceBetweenEnemies;
-                });
+            while (spawned < maxEnemiesPerZone) {
+                let attempts = 0;
 
-                if (!tooClose) {
-                    const enemy = new Enemy(this.scene, pos, 100);
-                    this.enemies.push(enemy);
-                    spawned++;
+                while (attempts < maxAttempts) {
+                    attempts++;
+
+                    // Calcul de la position en cercle avec une variation de distance
+                    const angle = baseAngle + angleStep * spawned;
+                    const distance = 5 + Math.random() * 3; // Rayon entre 5 et 8
+                    const offsetX = Math.cos(angle) * distance;
+                    const offsetZ = Math.sin(angle) * distance;
+                    const pos = new Vector3(collectiblePos.x + offsetX, 6.2, collectiblePos.z + offsetZ);
+
+                    // Vérifie si la position est dans un mur ou trop proche d'un autre ennemi
+                    const isInWall = MazeGenerator.isWallPosition(pos.x, pos.z);
+                    const tooClose = this.enemies.some(enemy => {
+                        const mesh = enemy.getMesh();
+                        return mesh && Vector3.Distance(mesh.position, pos) < minDistanceBetweenEnemies;
+                    });
+
+                    if (!isInWall && !tooClose) {
+                        const enemy = new Enemy(this.scene, pos, 100);
+                        this.enemies.push(enemy);
+                        spawned++;
+                        break; // Passe au prochain ennemi
+                    }
+                }
+
+                if (attempts >= maxAttempts) {
+                    console.warn(`⚠️ Impossible de placer un ennemi après ${maxAttempts} tentatives.`);
+                    break; // Arrête si trop de tentatives échouent
                 }
             }
         }
@@ -329,11 +356,18 @@ export class Level1 {
             proj.position.addInPlace(velocity.scale(delta));
 
             for (const enemy of this.enemies) {
-                const mesh = enemy.getMesh();
-                if (mesh && mesh.intersectsMesh(proj, false)) {
-                    enemy.reduceHealth(50);
-                    proj.dispose();
-                    return false;
+                const capsule = enemy.getCapsule();
+                if (capsule && capsule.intersectsMesh(proj, false)) {
+                    enemy.reduceHealth(50); // Réduit la santé de l'ennemi
+                    proj.dispose(); // Supprime le projectile
+                    if (enemy.getHealth() <= 0) {
+                        const enemyMesh = enemy.getMesh();
+                        if (enemyMesh) {
+                            enemyMesh.dispose(); // Supprime l'ennemi de la scène
+                        }
+                        this.enemies = this.enemies.filter(e => e !== enemy); // Supprime l'ennemi de la liste
+                    }
+                    return false; // Supprime le projectile de la scène
                 }
             }
 
@@ -348,17 +382,42 @@ export class Level1 {
 
     private spawnEndZone() {
         this.endPoint = MeshBuilder.CreateDisc("endZone", { radius: 5 }, this.scene);
-        const randomValidPos = MazeGenerator.getRandomEmptyPosition(); // Nouvelle méthode
-        this.endPoint.position = new Vector3(randomValidPos.x, 0.1, randomValidPos.z);
+
+        // Place la zone de fin à la position initiale du joueur
+        const playerStart = MazeGenerator.spawnZones.playerStart.clone();
+        this.endPoint.position = new Vector3(playerStart.x, 0.1, playerStart.z);
 
         const mat = new StandardMaterial("endZoneMat", this.scene);
         mat.diffuseColor = new Color3(0, 1, 0);
         this.endPoint.material = mat;
         this.endPoint.isPickable = true;
 
+        // Création du pop-up
+        const endZoneHint = document.createElement("div");
+        endZoneHint.style.position = "absolute";
+        endZoneHint.style.bottom = "50px";
+        endZoneHint.style.left = "50%";
+        endZoneHint.style.transform = "translateX(-50%)";
+        endZoneHint.style.padding = "10px 20px";
+        endZoneHint.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+        endZoneHint.style.color = "white";
+        endZoneHint.style.fontFamily = "Arial, sans-serif";
+        endZoneHint.style.fontSize = "18px";
+        endZoneHint.style.borderRadius = "5px";
+        endZoneHint.style.display = "none";
+        endZoneHint.innerText = "Appuyez sur E pour passer au niveau suivant";
+        document.body.appendChild(endZoneHint);
+
         this.scene.onBeforeRenderObservable.add(() => {
             const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
             this.hud.updateDistance(Math.round(dist), "Zone de fin");
+
+            // Affiche ou masque le pop-up en fonction de la distance
+            if (dist < 5) {
+                endZoneHint.style.display = "block";
+            } else {
+                endZoneHint.style.display = "none";
+            }
         });
 
         window.addEventListener("keydown", (event) => {
@@ -366,9 +425,19 @@ export class Level1 {
                 const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
                 if (dist < 5) {
                     console.log("🎉 Niveau terminé !");
-                    this.endLevel();
+                    endZoneHint.style.display = "none"; // Masque le pop-up
+                    this.loadLevel2(); // Charge le niveau 2
                 }
             }
+        });
+    }
+
+    private loadLevel2() {
+        console.log("🔄 Chargement du niveau 2...");
+        import("./Level2").then(({ Level2 }) => {
+            new Level2(this.scene, this.canvas); // Initialise le niveau 2
+        }).catch((error) => {
+            console.error("❌ Erreur lors du chargement du niveau 2 :", error);
         });
     }
 

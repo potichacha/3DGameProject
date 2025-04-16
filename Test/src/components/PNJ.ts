@@ -89,7 +89,7 @@ export class PNJ {
 
             const playerCapsule = this.scene.getMeshByName("playerCapsule");
             if (!playerCapsule || isDialogActive()) {
-                interactionHint.style.display = "none";
+                interactionHint.style.display = "none"; // Masque le pop-up si un dialogue est actif
                 return;
             }
 
@@ -99,5 +99,14 @@ export class PNJ {
 
         window.addEventListener("keydown", handleInteraction);
         this.handleInteraction = handleInteraction; // Stocke la référence pour pouvoir la supprimer
+    }
+
+    public setVisible(isVisible: boolean) {
+        if (this.mesh) {
+            this.mesh.isVisible = isVisible;
+        }
+        if (this.capsule) {
+            this.capsule.isVisible = isVisible;
+        }
     }
 }

@@ -2,7 +2,7 @@ import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 import { Player } from "../components/Player";
 
-const MOVE_SPEED = 15; // Réduit la vitesse de déplacement pour un contrôle plus fluide
+const MOVE_SPEED = 20; // Augmentation de la vitesse de déplacement
 const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
 
 export function setupControls(player: Player) {
