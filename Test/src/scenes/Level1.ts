@@ -1,6 +1,6 @@
 import {
     Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight,
-    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture
+    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture,DynamicTexture
 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
@@ -197,20 +197,48 @@ export class Level1 {
 
     private shootProjectile() {
         const playerPosition = this.player.getCapsule().position.clone();
+
         let forwardVector = this.player.getCapsule().forward.normalize();
         forwardVector = forwardVector.scale(-1);
-
-        const projectile = MeshBuilder.CreateSphere("projectile", { diameter: 0.5 }, this.scene);
-        projectile.position = playerPosition.add(forwardVector.scale(2));
-
+        const capsuleAmo = MeshBuilder.CreateCapsule("projectileCapsule", { height: 1, radius: 0.3 }, this.scene);
+        capsuleAmo.visibility = 0;
+        capsuleAmo.position = playerPosition.add(forwardVector.scale(2));
+        new PhysicsAggregate(capsuleAmo, PhysicsShapeType.CAPSULE, { mass: .1 }, this.scene);
+        const projectile = MeshBuilder.CreateSphere("projectile", { diameter: 1 }, this.scene);
+        projectile.position = new Vector3(0,0,0);
+        projectile.parent = capsuleAmo;
+        
         const material = new StandardMaterial("projectileMat", this.scene);
-        material.diffuseColor = new Color3(0, 0, 1);
+        const texture = new DynamicTexture("rainbowTex", {width: 512, height: 512}, this.scene, false);
+        const ctx = texture.getContext();
+
+        const gradient = ctx.createLinearGradient(0, 0, 512, 0);
+        gradient.addColorStop(0.4, "red");
+        gradient.addColorStop(0.3, "orange");
+        gradient.addColorStop(0.5, "yellow");
+        gradient.addColorStop(0.5, "green");
+        gradient.addColorStop(0.3, "blue");
+        gradient.addColorStop(0.3, "violet");
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 512, 512);
+        texture.update();
+
+        material.diffuseTexture = texture;
+        material.specularColor = new Color3(0, 0, 0);
         projectile.material = material;
 
-        const velocity = forwardVector.scale(20);
-        projectile.metadata = { velocity };
+        const physicsBody = capsuleAmo.physicsBody;
+        if (physicsBody) {
+            physicsBody.setLinearVelocity(forwardVector.scale(100));
+        }
 
-        this.projectiles.push(projectile);
+        this.scene.registerBeforeRender(() => {
+            projectile.rotation.y += 0.05;
+            projectile.rotation.x += 0.05;
+        });
+        capsuleAmo.metadata = { velocity: forwardVector.scale(20),lifetime: 5 };
+        this.projectiles.push(capsuleAmo);
     }
 
     private updateGameStateAndHUD() {
@@ -389,8 +417,15 @@ export class Level1 {
 
         this.projectiles = this.projectiles.filter(proj => {
             if (!proj) return false;
-            const velocity = proj.metadata.velocity;
+            const velocity = proj.metadata?.velocity;
+            if (!velocity) return false;
             proj.position.addInPlace(velocity.scale(delta));
+            proj.metadata.lifetime -= delta;
+
+            if (proj.metadata.lifetime <= 0) {
+                proj.dispose();
+                return false;
+            }
 
             for (const enemy of this.enemies) {
                 const capsule = enemy.getCapsule();
