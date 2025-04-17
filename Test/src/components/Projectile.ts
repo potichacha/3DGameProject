@@ -1,5 +1,5 @@
-import { Scene,MeshBuilder,PhysicsAggregate,PhysicsShapeType,Vector3,Mesh,StandardMaterial
-,Color3,DynamicTexture } from "@babylonjs/core";
+import { Scene,MeshBuilder,PhysicsAggregate,PhysicsShapeType,Vector3,Mesh,StandardMaterial,Sound
+,Color3,DynamicTexture,ParticleSystem,Color4 } from "@babylonjs/core";
 import { Player } from "../components/Player";
 import { Enemy } from "../components/Enemy";
 
@@ -8,25 +8,35 @@ export class Projectile {
     private player: Player;
     private projectiles: Mesh[] = [];
     private enemies: Enemy[] = [];
+    private shootSound: Sound;
 
-    public constructor(scene: Scene, player: Player) {
+
+    public constructor(scene: Scene, player: Player, enemies: Enemy[]) {
         this.scene = scene; 
         this.player = player;
+        this.enemies=enemies;
+        this.shootSound = new Sound("pew pew", "./src/music/soundstrack/pew-pew.mp3", this.scene, null, { loop: false, autoplay: false, volume: 0.2 });
+        this.setupShooting();
     }
 
-    private setupShooting1() {
+    public getProjectiles() {
+        return this.projectiles;
+    }
+
+    private setupShooting() {
         window.addEventListener("keydown", (event) => {
             if (event.key.toLowerCase() === "f") {
-                this.shootProjectile1();
+                this.shootProjectile();
+                this.shootSound.play();
             }
         });
 
         this.scene.onBeforeRenderObservable.add(() => {
-            this.updateProjectiles1();
+            this.updateProjectiles();
         });
     }
     
-    private shootProjectile1() {
+    private shootProjectile() {
         const playerPosition = this.player.getCapsule().position.clone();
 
         let forwardVector = this.player.getCapsule().forward.normalize();
@@ -72,7 +82,7 @@ export class Projectile {
         this.projectiles.push(capsuleAmo);
     }
 
-    private updateProjectiles1() {
+    public updateProjectiles() {
         const delta = this.scene.getEngine().getDeltaTime() / 1000;
 
         this.projectiles = this.projectiles.filter(proj => {
