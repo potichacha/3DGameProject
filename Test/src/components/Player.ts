@@ -75,8 +75,6 @@ export class Player {
                 return;
             }
             
-
-            //this.playerMesh = result.meshes.find(mesh => mesh.name.toLowerCase().includes("corps_Sphere_primitive0")) as Mesh || result.meshes[1] as Mesh;
             this.playerRoot = new TransformNode("playerRoot", this.scene);
             result.meshes.forEach(mesh => {
                 if (mesh.name.startsWith("corps_Sphere")) {
@@ -101,7 +99,7 @@ export class Player {
                 radius: 3.5,
             }, this.scene);
             this.physicsCapsule.visibility = 0;
-            this.physicsCapsule.position = startPosition;
+            this.physicsCapsule.position = new Vector3(startPosition.x, 4, startPosition.z);
             this.physicsCapsule.rotationQuaternion = Quaternion.Identity();
 
             this.physics = new PhysicsAggregate(this.physicsCapsule, PhysicsShapeType.CAPSULE, {
