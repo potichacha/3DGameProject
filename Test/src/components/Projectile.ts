@@ -9,12 +9,12 @@ export class Projectile {
     private projectiles: Mesh[] = [];
     private enemies: Enemy[] = [];
     private shootSound: Sound;
-
+    private lastShootTime: number = 0; // Temps du dernier tir
 
     public constructor(scene: Scene, player: Player, enemies: Enemy[]) {
         this.scene = scene; 
         this.player = player;
-        this.enemies=enemies;
+        this.enemies = enemies;
         this.shootSound = new Sound("pew pew", "./src/music/soundstrack/pew-pew.mp3", this.scene, null, { loop: false, autoplay: false, volume: 0.2 });
         this.setupShooting();
     }
@@ -26,8 +26,19 @@ export class Projectile {
     private setupShooting() {
         window.addEventListener("keydown", (event) => {
             if (event.key.toLowerCase() === "f") {
-                this.shootProjectile();
-                this.shootSound.play();
+                const currentTime = performance.now();
+                if (currentTime - this.lastShootTime >= 800) { // Vérifie si 0.8 seconde s'est écoulée
+                    this.shootProjectile();
+
+                    // Vérifie si le son est prêt avant de le jouer
+                    if (this.shootSound.isReady()) {
+                        this.shootSound.play();
+                    } else {
+                        console.error("❌ Le son 'pew pew' n'est pas prêt ou introuvable.");
+                    }
+
+                    this.lastShootTime = currentTime; // Met à jour le temps du dernier tir
+                }
             }
         });
 
