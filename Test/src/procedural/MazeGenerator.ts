@@ -1,10 +1,10 @@
 import { Scene, MeshBuilder, StandardMaterial, Texture, Vector3, PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class MazeGenerator {
-    static mazeGrid: string[] = Array(51).fill(null).map(() => Array(51).fill("1").join(''));
+    static mazeGrid: string[] = Array(41).fill(null).map(() => Array(41).fill("1").join(''));
 
     static readonly wallHeight = 50;
-    static readonly cellSize = 20;
+    static readonly cellSize = 16; // Réduction de 20 % (20 * 0.8 = 16)
 
     /* Fisher-Yates shuffle */
     static shuffleArray(array: any[]) {
@@ -17,7 +17,7 @@ export class MazeGenerator {
     }
 
     private static carvePath(row: number, col: number, maze: string[], visited: boolean[][]) {
-        if (row < 1 || row >= 50 || col < 1 || col >= 50 || visited[row][col]) {
+        if (row < 1 || row >= 40 || col < 1 || col >= 40 || visited[row][col]) {
             return; // Out of bounds or already visited
         }
 
@@ -31,7 +31,7 @@ export class MazeGenerator {
             const newRow = row + dx * 2;
             const newCol = col + dy * 2;
 
-            if (newRow > 0 && newRow < 50 && newCol > 0 && newCol < 50 && !visited[newRow][newCol]) {
+            if (newRow > 0 && newRow < 40 && newCol > 0 && newCol < 40 && !visited[newRow][newCol]) {
                 maze[row + dx] = maze[row + dx].substring(0, col + dy) + '0' + maze[row + dx].substring(col + dy + 1);
                 this.carvePath(newRow, newCol, maze, visited);
             }
@@ -56,7 +56,7 @@ export class MazeGenerator {
     };
 
     static generate() {
-        const mazeSize = 51;
+        const mazeSize = 41; // Réduction de 20 % (51 * 0.8 = 40.8, arrondi à 41)
         const maze: string[] = Array(mazeSize).fill(null).map(() => Array(mazeSize).fill("1").join(''));
         const visited: boolean[][] = Array(mazeSize).fill(null).map(() => Array(mazeSize).fill(false));
 
@@ -71,19 +71,23 @@ export class MazeGenerator {
             centerRow * this.cellSize - (maze.length * this.cellSize) / 2
         );
 
-        // 🔹 Réserver 3 zones aléatoires pour les collectibles
+        // 🔹 Réserver 5 zones aléatoires pour les collectibles
         const collectibleZones: { row: number, col: number }[] = [];
-        const minDistanceBetweenZones = 6; // Minimum distance between clear areas
+        const minDistanceBetweenZones = 5; // Ajusté pour la taille réduite
+        const minDistanceFromPlayerSpawn = 6; // Ajusté pour la taille réduite
 
-        while (collectibleZones.length < 3) {
+        while (collectibleZones.length < 5) { // Augmenté à 5 collectibles
             const row = Math.floor(Math.random() * (mazeSize / 2)) * 2 + 1;
             const col = Math.floor(Math.random() * (mazeSize / 2)) * 2 + 1;
 
-            const tooClose = collectibleZones.some(z => 
+            const tooCloseToOtherZones = collectibleZones.some(z => 
                 Math.abs(z.row - row) < minDistanceBetweenZones && Math.abs(z.col - col) < minDistanceBetweenZones
             );
 
-            if (!tooClose) {
+            const tooCloseToPlayerSpawn = Math.abs(centerRow - row) < minDistanceFromPlayerSpawn &&
+                                           Math.abs(centerCol - col) < minDistanceFromPlayerSpawn;
+
+            if (!tooCloseToOtherZones && !tooCloseToPlayerSpawn) {
                 this.clearArea(maze, row, col, 1); // Reserve a 3x3 area
                 collectibleZones.push({ row, col });
             }

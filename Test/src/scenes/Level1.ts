@@ -1,6 +1,6 @@
 import {
     Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight,
-    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture,DynamicTexture
+    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture, DynamicTexture, PointLight
 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Player } from "../components/Player";
@@ -15,6 +15,9 @@ import { DialogManager } from "../Dialog/DialogManager";
 import { MissionManager } from "../core/MissionManager";
 import { Projectile } from "../components/Projectile";
 
+const LIGHT_INTENSITY = 1.0; // Intensité commune
+const LIGHT_RANGE = 30; // Portée commune
+
 export class Level1 {
     private scene: Scene;
     private canvas: HTMLCanvasElement;
@@ -27,7 +30,7 @@ export class Level1 {
     private enemies: Enemy[] = [];
     private hud: HUD;
     private collectedCount: number = 0;
-    private totalCollectibles: number = 3;
+    private totalCollectibles: number = 5; // Augmenté à 5 collectibles
     private projectiles!: Projectile;
     private music: Music;
     private missionManager: MissionManager;
@@ -51,12 +54,20 @@ export class Level1 {
         console.log("🔨 Création du niveau 1...");
 
         this.scene.collisionsEnabled = true;
-        new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
 
-        // Ajout d'un effet de brouillard
-        this.scene.fogMode = Scene.FOGMODE_EXP; // Utilise un brouillard exponentiel
-        this.scene.fogDensity = 0.02; // Contrôle la densité du brouillard (plus élevé = plus sombre)
-        this.scene.fogColor = new Color3(0, 0, 0); // Couleur du brouillard (noir pour une ambiance sombre)
+        // Lumière hémisphérique globale pour un éclairage doux
+        const light = new HemisphericLight("light1", new Vector3(0, 1, 0), this.scene);
+        light.intensity = 0.3; // Réduit l'intensité pour conserver l'effet sombre
+
+        // Lumière ponctuelle mobile pour suivre le joueur
+        const playerLight = new PointLight("playerLight", new Vector3(0, 10, 0), this.scene);
+        playerLight.intensity = LIGHT_INTENSITY; // Utilisation de la constante
+        playerLight.range = LIGHT_RANGE; // Utilisation de la constante
+
+        // Ajout d'un effet de brouillard pour renforcer l'ambiance sombre
+        this.scene.fogMode = Scene.FOGMODE_EXP;
+        this.scene.fogDensity = 0.02; // Ajustez pour plus ou moins de visibilité
+        this.scene.fogColor = new Color3(0, 0, 0); // Noir pour un effet sombre
 
         const groundSize = 1000;
         const ground = MeshBuilder.CreateGround("ground", { width: groundSize, height: groundSize }, this.scene);
@@ -79,9 +90,8 @@ export class Level1 {
 
         this.setupFollowCamera();
         this.setupFreeCamera();
-        this.setupTopViewCamera(); // Ajout de la caméra vue du dessus
+        this.setupTopViewCamera();
         this.setupCameraSwitch();
-        //this.setupShooting();
 
         for (const pos of MazeGenerator.spawnZones.collectibles) {
             const collectible = new Collectible(this.scene, pos, () => this.collectItem());
@@ -96,7 +106,6 @@ export class Level1 {
 
         // Initialise le dialogue d'intro
         this.dialogManager.initIntroDialog(this.scene, this.pnj, this.hud, () => {
-            // Appelé uniquement après la fin de l'intro
             this.missionManager.setMission("Talk to the PNJ");
             this.pnj.enableInteraction(() => this.handlePNJInteraction(), () => this.isDialogActive);
         });
@@ -119,8 +128,8 @@ export class Level1 {
     private setupFollowCamera() {
         this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
         this.followCamera.lockedTarget = this.player.getCapsule();
-        this.followCamera.radius = 25;
-        this.followCamera.heightOffset = 9;
+        this.followCamera.radius = 20; // Rapproche légèrement la caméra
+        this.followCamera.heightOffset = 8; // Ajuste la hauteur
         this.followCamera.rotationOffset = 0;
         this.followCamera.cameraAcceleration = 0.5;
         this.followCamera.maxCameraSpeed = 10;
@@ -136,7 +145,7 @@ export class Level1 {
     }
 
     private setupTopViewCamera() {
-        this.topViewCamera = new FreeCamera("TopViewCamera", new Vector3(0, 100, 0), this.scene);
+        this.topViewCamera = new FreeCamera("TopViewCamera", new Vector3(0, 50, 0), this.scene); // Hauteur ajustée à 40
         this.topViewCamera.setTarget(new Vector3(0, 0, 0)); // Regarde vers le bas
         this.topViewCamera.mode = FreeCamera.ORTHOGRAPHIC_CAMERA; // Vue orthographique pour un effet "carte"
         this.topViewCamera.attachControl(this.canvas, true);
@@ -172,8 +181,8 @@ export class Level1 {
     private switchToTopViewCamera() {
         if (this.topViewCamera) {
             this.scene.activeCamera = this.topViewCamera;
-            this.topViewCamera.position = this.player.getCapsule().position.add(new Vector3(0, 100, 0)); // Suit le joueur
-            this.topViewCamera.setTarget(this.player.getCapsule().position); // Regarde le joueur
+            this.topViewCamera.position = this.player.getCapsule().position.add(new Vector3(0, 50, 0)); // Ajuste la hauteur à 40
+            this.topViewCamera.setTarget(this.player.getCapsule().position);
             this.topViewCamera.attachControl();
         }
     }
@@ -234,10 +243,17 @@ export class Level1 {
 
     private updateScene() {
         this.scene.onBeforeRenderObservable.add(() => {
-            this.updateGameStateAndHUD(); // Remplace updateHUDForMission
+            this.updateGameStateAndHUD();
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
             this.projectiles.updateProjectiles();
             this.updateEnemies();
+
+            // Déplace la lumière ponctuelle pour suivre le joueur
+            const playerLight = this.scene.getLightByName("playerLight") as PointLight;
+            if (playerLight) {
+                playerLight.position = this.player.getCapsule().position.clone().add(new Vector3(0, 10, 0));
+            }
+
             window.addEventListener("keydown", () => {
                 this.music.playMusic();
             }, { once: true });
@@ -301,15 +317,15 @@ export class Level1 {
     }
 
     private spawnEnemies() {
-        const minDistanceBetweenEnemies = 8; // Augmentation de la distance minimale entre les ennemis
-        const spawnRadius = 8; // Rayon autour du collectible pour le spawn aléatoire
-        const maxAttempts = 20; // Limite de tentatives pour éviter une boucle infinie
+        const minDistanceBetweenEnemies = 10; // Ajusté pour la taille réduite
+        const maxEnemiesPerZone = 4; // Augmenté pour équilibrer avec 5 collectibles
 
         for (const collectiblePos of MazeGenerator.spawnZones.collectibles) {
             let spawned = 0;
-            const maxEnemiesPerZone = 3; // Nombre maximum d'ennemis par zone
-            const angleStep = (2 * Math.PI) / maxEnemiesPerZone; // Répartition uniforme en cercle
-            const baseAngle = Math.random() * 2 * Math.PI; // Angle de départ aléatoire
+            const angleStep = (2 * Math.PI) / maxEnemiesPerZone;
+
+            const spawnRadius = 8; // Rayon autour du collectible pour le spawn aléatoire
+            const maxAttempts = 20; // Limite de tentatives pour éviter une boucle infinie
 
             while (spawned < maxEnemiesPerZone) {
                 let attempts = 0;
@@ -318,7 +334,7 @@ export class Level1 {
                     attempts++;
 
                     // Calcul de la position en cercle avec une variation de distance
-                    const angle = baseAngle + angleStep * spawned;
+                    const angle = angleStep * spawned;
                     const distance = 5 + Math.random() * 3; // Rayon entre 5 et 8
                     const offsetX = Math.cos(angle) * distance;
                     const offsetZ = Math.sin(angle) * distance;

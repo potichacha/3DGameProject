@@ -1,10 +1,11 @@
-import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder, PointLight } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
     private scene: Scene;
     private mesh: AbstractMesh | null = null;
     private capsule: AbstractMesh | null = null; // Capsule physique de l'ennemi
+    private light: PointLight | null = null; // Lumière autour de l'ennemi
     private health: number;
     private lastShotTime: number = 0;
 
@@ -23,6 +24,20 @@ export class Enemy {
             this.capsule.position = position;
             this.capsule.visibility = 0; // Rendre la capsule invisible
             new PhysicsAggregate(this.capsule, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);
+
+            // Ajout d'une lumière ponctuelle autour de l'ennemi
+            this.light = new PointLight("enemyLight", this.mesh.position.clone(), this.scene);
+            this.light.intensity = 2.0; // Augmenter l'intensité pour plus de visibilité
+            this.light.range = 50; // Augmenter la portée pour couvrir une plus grande zone
+            this.light.diffuse = new Color3(1, 0, 0); // Couleur rouge pour la lumière
+            this.light.specular = new Color3(1, 1, 1); // Couleur spéculaire blanche
+
+            // Mise à jour de la position de la lumière pour suivre le mesh
+            this.scene.onBeforeRenderObservable.add(() => {
+                if (this.mesh && this.light) {
+                    this.light.position = this.mesh.position.clone();
+                }
+            });
         });
     }
 
@@ -46,6 +61,10 @@ export class Enemy {
         if (this.capsule) {
             this.capsule.dispose();
             this.capsule = null;
+        }
+        if (this.light) {
+            this.light.dispose(); // Supprime la lumière
+            this.light = null;
         }
         console.log("👾 Ennemi complètement supprimé !");
     }

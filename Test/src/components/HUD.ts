@@ -59,6 +59,7 @@ export class HUD {
 
         update(current: number, total: number) {
             this.counterElement.innerText = `Collectibles : ${current}/${total}`;
+            console.log(`🔄 Mise à jour du HUD : ${current}/${total} collectibles`);
         }
 
         updateDistance(distance: number, label: string) {

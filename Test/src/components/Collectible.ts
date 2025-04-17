@@ -1,8 +1,10 @@
-import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, AbstractMesh } from "@babylonjs/core";
+import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, AbstractMesh, PointLight } from "@babylonjs/core";
+import { MazeGenerator } from "../procedural/MazeGenerator";
 
 export class Collectible {
     private scene: Scene;
     private mesh: AbstractMesh | null; // ✅ Inclure null dans le type
+    private light: PointLight | null; // Lumière autour du collectible
     private onCollect: () => void; // Fonction appelée quand on ramasse l'objet
 
     constructor(scene: Scene, position: Vector3, onCollect: () => void) {
@@ -20,6 +22,11 @@ export class Collectible {
 
         // 📌 Désactiver les collisions physiques pour éviter les rebonds
         this.mesh.checkCollisions = false;
+
+        // 📌 Ajout d'une lumière ponctuelle avec une intensité et une portée augmentées
+        this.light = new PointLight("collectibleLight", this.mesh.position.clone(), this.scene);
+        this.light.intensity = 1.0; // Même intensité que celle du joueur
+        this.light.range = 30; // Même portée que celle du joueur
     }
 
     getPosition(): Vector3 {
@@ -34,6 +41,12 @@ export class Collectible {
             console.log("✅ Collectible ramassé !");
             this.mesh.dispose(); // Supprime l'objet
             this.mesh = null; // Empêche un double appel
+
+            if (this.light) {
+                this.light.dispose(); // Supprime la lumière
+                this.light = null;
+            }
+
             this.onCollect(); // Appelle la fonction pour mettre à jour le compteur
         }
     }
