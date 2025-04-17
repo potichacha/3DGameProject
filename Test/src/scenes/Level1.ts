@@ -13,6 +13,7 @@ import { Music } from "../music/music";
 import { PNJ } from "../components/PNJ";
 import { DialogManager } from "../Dialog/DialogManager";
 import { MissionManager } from "../core/MissionManager";
+import { Projectile } from "../components/Projectile";
 
 export class Level1 {
     private scene: Scene;
@@ -62,7 +63,7 @@ export class Level1 {
         ground.checkCollisions = true;
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
-        groundMaterial.diffuseTexture = new Texture("./src/assets/textures/nuage.avif", this.scene);
+        groundMaterial.diffuseTexture = new Texture("./src/assets/textures/cloud2.jpg", this.scene);
         ground.material = groundMaterial;
         (groundMaterial.diffuseTexture as Texture).uScale = 25;
         (groundMaterial.diffuseTexture as Texture).vScale = 25;
@@ -88,7 +89,7 @@ export class Level1 {
 
         this.spawnEnemies();
 
-        this.pnj = new PNJ(this.scene, new Vector3(0, 0, 0));
+        this.pnj = new PNJ(this.scene, new Vector3(0, 1, 0));
 
         setupControls(this.player);
 
@@ -294,7 +295,12 @@ export class Level1 {
             this.collectibles.forEach(collectible => collectible.checkCollision(this.player.getCapsule()));
             this.updateProjectiles();
             this.updateEnemies();
-            this.music.playMusic();
+            window.addEventListener("keydown", () => {
+                this.music.playMusic();
+            }, { once: true });
+            window.addEventListener("click", () => {
+                this.music.playMusic();
+            }, { once: true });
         });
     }
 

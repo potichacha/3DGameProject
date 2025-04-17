@@ -10,17 +10,17 @@ export class PNJ {
     constructor(scene: Scene, position: Vector3) {
         this.scene = scene;
 
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "armor_cat.glb", this.scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "chat.glb", this.scene).then((result) => {
             console.log("🔍 PNJ importés :", result.meshes);
 
             this.mesh = result.meshes[0] as Mesh;
             this.mesh.position = position;
-            this.mesh.scaling = new Vector3(0.1, 0.1, 0.1);
+            this.mesh.scaling = new Vector3(2, 2, 2);
 
             this.mesh.checkCollisions = false;
 
             // Ajout de la capsule physique
-            this.capsule = MeshBuilder.CreateCapsule("pnjCapsule", { height: 2, radius: 0.5 }, this.scene);
+            this.capsule = MeshBuilder.CreateCapsule("pnjCapsule", { height: 8, radius: 0.5 }, this.scene);
             this.capsule.position = position;
             this.capsule.visibility = 0; // Rendre la capsule invisible
             new PhysicsAggregate(this.capsule, PhysicsShapeType.CAPSULE, { mass: 0 }, this.scene);

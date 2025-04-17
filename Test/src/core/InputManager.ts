@@ -2,8 +2,8 @@ import { Vector3, Quaternion, Matrix } from "@babylonjs/core";
 import { PhysicsAggregate } from "@babylonjs/core";
 import { Player } from "../components/Player";
 
-const MOVE_SPEED = 20; // Augmentation de la vitesse de déplacement
-const ROTATION_SPEED = 0.02; // ✅ Rotation douce et précise
+const MOVE_SPEED = 30; // Augmentation de la vitesse de déplacement
+const ROTATION_SPEED = 0.025; // ✅ Rotation douce et précise
 
 export function setupControls(player: Player) {
     let playerPhysics: PhysicsAggregate = player.getPhysics();
@@ -37,13 +37,14 @@ export function setupControls(player: Player) {
                 inputStates.forward = false;
                 inputStates.backward = false;
                 playerPhysics.body.setLinearVelocity(new Vector3(0, playerPhysics.body.getLinearVelocity().y, 0)); // Stop movement immediately
+                player.getAnimationGroups()[1].play(false);
                 break;
             case "q": inputStates.left = false; break;
             case "d": inputStates.right = false; break;
             case " ": inputStates.jump = false; break;
         }
     });
-
+    
     playerPhysics.body.transformNode.getScene().onBeforeRenderObservable.add(() => {
         const body = playerPhysics.body;
         const transformNode = body.transformNode;
