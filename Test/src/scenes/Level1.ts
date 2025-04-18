@@ -3,6 +3,7 @@ import {
     FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture, DynamicTexture, PointLight
 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
+import { Level } from "../scenes/Level"; // Ensure the correct path to the Level class or interface
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
 import { MazeGenerator } from "../procedural/MazeGenerator";
@@ -18,11 +19,11 @@ import { Projectile } from "../components/Projectile";
 const LIGHT_INTENSITY = 1.0; // Intensité commune
 const LIGHT_RANGE = 30; // Portée commune
 
-export class Level1 {
-    private scene: Scene;
-    private canvas: HTMLCanvasElement;
-    private player!: Player;
-    private followCamera!: FollowCamera;
+export class Level1 extends Level {
+    protected scene!: Scene;
+    protected canvas!: HTMLCanvasElement;
+    protected player!: Player;
+    protected followCamera!: FollowCamera;
     private freeCamera!: FreeCamera;
     private topViewCamera!: FreeCamera; // Caméra vue du dessus
     private isFreeCamera: boolean = false;
@@ -41,8 +42,7 @@ export class Level1 {
     private hasTalkedToPNJ: boolean = false;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
-        this.scene = scene;
-        this.canvas = canvas;
+        super(scene, canvas);
         this.hud = new HUD();
         this.music = new Music("./src/music/soundstrack/Item Bounce - Kirby Air Ride.mp3");
         this.missionManager = new MissionManager(this.hud);
@@ -84,7 +84,7 @@ export class Level1 {
         MazeGenerator.deploy(this.scene);
 
         const playerStart = MazeGenerator.spawnZones.playerStart;
-        this.player = new Player(this.scene, playerStart);
+        this.player = new Player(this.scene, playerStart,"sinj.glb");
         this.projectiles = new Projectile(this.scene, this.player, this.enemies);
         await this.player.meshReady();
 
@@ -125,7 +125,7 @@ export class Level1 {
         console.log("✅ Niveau 1 prêt !");
     }
 
-    private setupFollowCamera() {
+    protected setupFollowCamera() {
         this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
         this.followCamera.lockedTarget = this.player.getCapsule();
         this.followCamera.radius = 20; // Rapproche légèrement la caméra

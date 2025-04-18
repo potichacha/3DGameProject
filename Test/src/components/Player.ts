@@ -11,9 +11,11 @@ export class Player {
     private animationGroup: AnimationGroup[] = [];
     private meshLoaded: boolean = false;
     private health: number = 100;
+    private nameMesh!: string;
 
-    constructor(scene: Scene, startPosition: Vector3) {
+    constructor(scene: Scene, startPosition: Vector3,nameMesh: string) {
         this.scene = scene;
+        this.nameMesh = nameMesh;
         this.createMesh(startPosition);
     }
 
@@ -55,7 +57,7 @@ export class Player {
     }
 
     private createMesh(startPosition: Vector3) {
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", "sinj.glb", this.scene).then((result) => {//finaleSinj
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", this.nameMesh, this.scene).then((result) => {//finaleSinj
             console.log("🔍 Meshes importés :", result.meshes);
             console.log("🔍 Meshes importés :", result);
 
@@ -78,6 +80,9 @@ export class Player {
             this.playerRoot = new TransformNode("playerRoot", this.scene);
             result.meshes.forEach(mesh => {
                 if (mesh.name.startsWith("corps_Sphere")) {
+                    mesh.parent = this.playerRoot;
+                }
+                if (mesh.name.startsWith("Ch23_")) {
                     mesh.parent = this.playerRoot;
                 }
             });
@@ -183,7 +188,12 @@ export class Player {
         const ray = new Ray(cameraPosition, direction, distance);
 
         // Perform the raycast, only checking walls
-        const hit = this.scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
+        //const hit = this.scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
+        const hit = this.scene.pickWithRay(ray, (mesh) => {
+            // Check if the mesh is either named "wall" or one of the specific wall names
+            const wallNames = ["northWall", "southWall", "eastWall", "westWall"];
+            return mesh.name === "wall" || wallNames.includes(mesh.name);
+        });
 
         let newlyInvisibleWall: Mesh | null = null;
 
