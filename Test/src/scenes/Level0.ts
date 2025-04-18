@@ -163,7 +163,7 @@ export class Level0 extends Level{
         new PhysicsAggregate(bureau, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
         //gestion personnage et camera
-        this.player = new Player(this.scene, new Vector3(0, 0, 0),"irl.glb");
+        this.player = new Player(this.scene, new Vector3(0, 0, 0),"student.glb");
         await this.player.meshReady();
         this.player.getMesh().scaling = new Vector3(0.16, 0.16, 0.16);
         setupControls(this.player);
