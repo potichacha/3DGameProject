@@ -166,7 +166,7 @@ export class Level0 extends Level{
         this.player = new Player(this.scene, new Vector3(0, 0, 0),"student.glb");
         await this.player.meshReady();
         this.player.getMesh().scaling = new Vector3(0.16, 0.16, 0.16);
-        setupControls(this.player);
+        setupControls(this.player, 300);
         super.setupFollowCamera();
         this.followCamera.heightOffset = 30; 
         this.followCamera.radius = 80;
