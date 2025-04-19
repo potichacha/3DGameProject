@@ -63,7 +63,7 @@ export class HUD {
         }
 
         updateDistance(distance: number, label: string) {
-            console.log(`🔄 Mise à jour de la distance dans le HUD : ${label} - ${distance.toFixed(1)}m`);
+            //console.log(`🔄 Mise à jour de la distance dans le HUD : ${label} - ${distance.toFixed(1)}m`);
             this.distanceElement.innerText = `${label}: ${distance.toFixed(1)}m`;
 
             // Vérification si l'élément HTML est bien mis à jour
