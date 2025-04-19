@@ -1,6 +1,6 @@
 import { Scene, Vector3,FollowCamera } from "@babylonjs/core";
 import { Player } from "../components/Player";
-export abstract class Level{
+export abstract class Level {
     protected followCamera!: FollowCamera;
     protected player!: Player;
     protected scene: Scene;

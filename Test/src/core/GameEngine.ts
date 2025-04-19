@@ -21,7 +21,7 @@ export class GameEngine {
         });
 
         this.engine.runRenderLoop(() => {
-            console.log("🔄 Frame rendue");
+            //console.log("🔄 Frame rendue");
             this.scene.render();
         });
 
