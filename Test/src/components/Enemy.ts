@@ -1,4 +1,4 @@
-import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder, PointLight } from "@babylonjs/core";
+import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder, PointLight,Mesh } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class Enemy {
@@ -8,6 +8,7 @@ export class Enemy {
     private light: PointLight | null = null; // Lumière autour de l'ennemi
     private health: number;
     private lastShotTime: number = 0;
+    private enemyProjectiles: Mesh[] = []; // Liste des projectiles de l'ennemi
 
     constructor(scene: Scene, position: Vector3, health: number) {
         this.scene = scene;
@@ -79,7 +80,7 @@ export class Enemy {
 
     shootAtPlayer(scene: Scene, playerPosition: Vector3) {
         const currentTime = performance.now();
-        if (currentTime - this.lastShotTime < 2000) return; // Tir toutes les 2 secondes
+        if (currentTime - this.lastShotTime < 1500) return; // Tir toutes les 2 secondes
         this.lastShotTime = currentTime;
 
         if (!this.mesh) {
@@ -87,40 +88,70 @@ export class Enemy {
             return;
         }
         // Vérifie la ligne de vue directe vers le joueur
+        
         const ray = new Ray(this.mesh.position, playerPosition.subtract(this.mesh.position).normalize());
         const hit = scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
         if (hit && hit.pickedMesh) return; // Si un mur bloque la vue, ne pas tirer
 
-        // Crée un projectile (petite sphère rouge)
-        const projectile = MeshBuilder.CreateSphere("enemyProjectile", { diameter: 0.5 }, scene);
-
-        const material = new StandardMaterial("projectileMat", scene);
-        material.diffuseColor = new Color3(1, 0, 0); // Rouge
-        projectile.material = material;
-
         // Direction vers la position du joueur
         const direction = playerPosition.subtract(this.mesh.position).normalize();
 
-        // Définir la vitesse des projectiles des ennemis à 20 (comme les vôtres)
-        const velocity = direction.scale(20); // Vitesse du projectile
-        projectile.metadata = { velocity };
+        const capsule = MeshBuilder.CreateCapsule("enemyCapsuleProjectile", { height: 1, radius: 0.5 }, scene);
+        capsule.visibility = 0;
+        capsule.position = this.mesh.position.add(direction.scale(2));
+        new PhysicsAggregate(capsule, PhysicsShapeType.CAPSULE, { mass: 0.1 }, scene);
+
+        const projectile = MeshBuilder.CreateSphere("enemyProjectile", { diameter: 1 }, scene);
+        projectile.position = new Vector3(0, 0, 0);
+        const material = new StandardMaterial("projectileMat", scene);
+        material.diffuseColor = new Color3(1, 0, 0); // Rouge
+        projectile.material = material;
+        projectile.parent = capsule;
+        const physicsBody = capsule.physicsBody;
+        if (physicsBody) {
+            physicsBody.setLinearVelocity(direction.scale(80));//vitesse balle
+        }
+        capsule.metadata = { velocity: direction.scale(20), lifetime: 3 };
+        this.enemyProjectiles.push(capsule);
 
         // Déplacement du projectile
-        scene.onBeforeRenderObservable.add(() => {
-            const deltaTime = scene.getEngine().getDeltaTime() / 1000;
-            projectile.position.addInPlace(velocity.scale(deltaTime));
+        const deltaTime = scene.getEngine().getDeltaTime() / 1000;
+        projectile.position.addInPlace(capsule.metadata.velocity.scale(deltaTime));
+        this.scene.registerBeforeRender(() => {
+            projectile.rotation.y += 0.05;
+            projectile.rotation.x += 0.05;
+        });
+        scene.registerBeforeRender(() => {
+            this.updateEnemyProjectiles();
+        });  
+    }
 
-            // Supprime le projectile s'il touche un mur ou sort de la scène
-            const ray = new Ray(projectile.position, velocity.normalize());
-            const hit = scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
-            if (hit && hit.pickedMesh) {
-                projectile.dispose();
+    public updateEnemyProjectiles() {
+        const delta = this.scene.getEngine().getDeltaTime() / 1000;
+    
+        this.enemyProjectiles = this.enemyProjectiles.filter(proj => {
+            if (!proj) return false;
+    
+            const velocity = proj.metadata?.velocity;
+            if (!velocity) return false;
+    
+            proj.position.addInPlace(velocity.scale(delta));
+            proj.metadata.lifetime -= delta;
+    
+            // Ici tu peux faire collision avec le joueur, ex :
+            /*const playerCapsule = this.player.getCapsule();
+            if (playerCapsule && playerCapsule.intersectsMesh(proj, false)) {
+                this.player.reduceHealth?.(10); // ou comme tu veux
+                proj.dispose();
+                return false;
+            }*/
+    
+            if (proj.position.length() > 1000 || proj.metadata.lifetime <= 0) {
+                proj.dispose();
+                return false;
             }
-
-            // Supprime le projectile s'il sort de la scène
-            if (projectile.position.length() > 1000) {
-                projectile.dispose();
-            }
+    
+            return true;
         });
     }
 }

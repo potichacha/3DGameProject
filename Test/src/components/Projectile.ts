@@ -27,16 +27,9 @@ export class Projectile {
         window.addEventListener("keydown", (event) => {
             if (event.key.toLowerCase() === "f") {
                 const currentTime = performance.now();
-                if (currentTime - this.lastShootTime >= 800) { // Vérifie si 0.8 seconde s'est écoulée
+                if (currentTime - this.lastShootTime >= 700) { // Vérifie si 0.7 seconde s'est écoulée
                     this.shootProjectile();
-
-                    // Vérifie si le son est prêt avant de le jouer
-                    if (this.shootSound.isReady()) {
-                        this.shootSound.play();
-                    } else {
-                        console.error("❌ Le son 'pew pew' n'est pas prêt ou introuvable.");
-                    }
-
+                    this.shootSound.play();
                     this.lastShootTime = currentTime; // Met à jour le temps du dernier tir
                 }
             }
