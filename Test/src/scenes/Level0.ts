@@ -170,12 +170,20 @@ export class Level0 extends Level{
         super.setupFollowCamera();
         this.followCamera.heightOffset = 30; 
         this.followCamera.radius = 80;
-        //this.update();
+        //this.update(); //pour debug laposition joueur
     }
 
     protected update() {
         this.scene.onBeforeRenderObservable.add(() => {
             console.log("📍 Player position:", this.player.getCapsulePosition());
+        });
+    }
+    private loadLevel1() {
+        console.log("🔄 Chargement du niveau 1...");
+        import("./Level1").then(({ Level1 }) => { // Correction du chemin vers Level1
+            new Level1(this.scene, this.canvas); // Initialise le niveau 1
+        }).catch((error) => {
+            console.error("❌ Erreur lors du chargement du niveau 1 :", error);
         });
     }
 }
