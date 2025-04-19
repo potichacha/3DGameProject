@@ -4,14 +4,14 @@ import { Player } from "../components/Player";
 
 const DEFAULT_MOVE_SPEED = 30;
 const ROTATION_SPEED = 0.025;
-const JUMP_IMPULSE = 50; // Keep high for now, tune later if jump works
+const JUMP_IMPULSE = 50;
 const GROUND_CHECK_EXTRA_DISTANCE = 0.2;
 const FORWARD_CHECK_DISTANCE = 0.5;
-const AIR_DAMPING_FACTOR = 0.98; // Less aggressive damping
-const AIR_CONTROL_FACTOR = 0.4; // Player has 40% of ground move speed in air
+const AIR_DAMPING_FACTOR = 0.98;
+const AIR_CONTROL_FACTOR = 0.4;
 
 export function setupControls(player: Player, customMoveSpeed?: number) {
-    const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED;
+    const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED; // Use correct variable name
     let playerPhysicsAggregate: PhysicsAggregate | null = player.getPhysics();
     let inputStates = {
         forward: false,
@@ -82,7 +82,6 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
         const groundRayOrigin = transformNode.position;
         const groundRayLength = capsuleCenterToBottom + GROUND_CHECK_EXTRA_DISTANCE;
         const groundRay = new Ray(groundRayOrigin, Vector3.Down(), groundRayLength);
-        // Exclude the player capsule itself from the ground check
         const groundHit = scene.pickWithRay(groundRay, (mesh) => mesh.isPickable && mesh.checkCollisions && mesh !== transformNode);
         isGrounded = !!groundHit?.pickedMesh;
 
@@ -102,46 +101,42 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
         // --- Movement Calculation ---
         const forwardWorld = transformNode.forward.negate();
         let currentLinVelocity = body.getLinearVelocity() || Vector3.Zero();
-        let newVelocity = new Vector3(currentLinVelocity.x, currentLinVelocity.y, currentLinVelocity.z); // Start with current velocity
-        let canMoveForward = true; // Used only for grounded forward check
+        let newVelocity = new Vector3(currentLinVelocity.x, currentLinVelocity.y, currentLinVelocity.z);
+        let canMoveForward = true;
 
-        // Calculate desired horizontal movement based on input, ignore obstacles for now
+        // Calculate desired horizontal movement based *only* on forward/backward input
         let horizontalTargetVelocity = Vector3.Zero();
         if (inputStates.backward) {
             horizontalTargetVelocity.addInPlace(forwardWorld.negate().scale(MOVE_SPEED));
         }
-        if (inputStates.forward) { // Forward obstacle check done later if grounded
+        // Check forward obstacles only if trying to move forward (and grounded)
+        if (inputStates.forward && isGrounded) {
+             const radius = playerCapsuleKnownRadius;
+             const forwardRayOrigin = transformNode.position.add(forwardWorld.scale(radius * 0.5));
+             const forwardRay = new Ray(forwardRayOrigin, forwardWorld, FORWARD_CHECK_DISTANCE);
+             const forwardHit = scene.pickWithRay(forwardRay, (mesh) => mesh.isPickable && mesh.checkCollisions && mesh !== transformNode);
+             if (forwardHit?.pickedMesh) {
+                 canMoveForward = false;
+             } else {
+                 horizontalTargetVelocity.addInPlace(forwardWorld.scale(MOVE_SPEED));
+             }
+        } else if (inputStates.forward && !isGrounded){ // Allow forward air movement without obstacle check
              horizontalTargetVelocity.addInPlace(forwardWorld.scale(MOVE_SPEED));
         }
 
 
         if (isGrounded) {
-             // --- Forward Obstacle Check (Grounded Only) ---
-             if (inputStates.forward) {
-                 const radius = playerCapsuleKnownRadius;
-                 const forwardRayOrigin = transformNode.position.add(forwardWorld.scale(radius * 0.5)); // Check from front edge
-                 const forwardRay = new Ray(forwardRayOrigin, forwardWorld, FORWARD_CHECK_DISTANCE); // Check short distance ahead
-                 const forwardHit = scene.pickWithRay(forwardRay, (mesh) => mesh.isPickable && mesh.checkCollisions && mesh !== transformNode);
-                 if (forwardHit?.pickedMesh) {
-                     canMoveForward = false;
-                     // Zero out forward component of target velocity if blocked
-                     if(Vector3.Dot(horizontalTargetVelocity, forwardWorld) > 0){
-                         horizontalTargetVelocity = Vector3.Zero(); // Or just remove forward component
-                     }
-                 }
+             // --- Apply Ground Velocity ---
+             if (horizontalTargetVelocity.lengthSquared() > 0.01) {
+                 // Apply calculated forward/backward movement
+                 newVelocity.x = horizontalTargetVelocity.x;
+                 newVelocity.z = horizontalTargetVelocity.z;
+             } else {
+                 // No forward/backward input (could be idle or just rotating)
+                 // Stop horizontal movement by setting velocity to zero
+                 newVelocity.x = 0;
+                 newVelocity.z = 0;
              }
-
-            // --- Apply Ground Velocity ---
-            if (horizontalTargetVelocity.lengthSquared() > 0.01) {
-                newVelocity.x = horizontalTargetVelocity.x;
-                newVelocity.z = horizontalTargetVelocity.z;
-            } else if (!inputStates.left && !inputStates.right) { // No input, damp horizontal velocity
-                 newVelocity.x *= 0.8; // Ground damping
-                 newVelocity.z *= 0.8;
-            } else { // Only rotating, keep current horizontal velocity
-                newVelocity.x = currentLinVelocity.x;
-                newVelocity.z = currentLinVelocity.z;
-            }
 
         } else {
             // --- Apply Air Velocity ---
@@ -150,7 +145,7 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
              if (inputStates.backward) {
                  airTargetVelocity.addInPlace(forwardWorld.negate().scale(MOVE_SPEED * AIR_CONTROL_FACTOR));
              }
-             if (inputStates.forward) {
+             if (inputStates.forward) { // Use the same forward input check result
                   airTargetVelocity.addInPlace(forwardWorld.scale(MOVE_SPEED * AIR_CONTROL_FACTOR));
              }
 
@@ -158,18 +153,10 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
              newVelocity.x = currentLinVelocity.x * AIR_DAMPING_FACTOR;
              newVelocity.z = currentLinVelocity.z * AIR_DAMPING_FACTOR;
 
-             // Add the air control input velocity to the damped velocity
-             // This allows changing direction mid-air, but with less authority
-             newVelocity.x += airTargetVelocity.x * (scene.getEngine().getDeltaTime()/1000); // Scale by delta time for smoother acceleration feel
-             newVelocity.z += airTargetVelocity.z * (scene.getEngine().getDeltaTime()/1000);
-
-             // Optional: Clamp max air speed if desired
-             // const horizontalSpeed = Math.sqrt(newVelocity.x*newVelocity.x + newVelocity.z*newVelocity.z);
-             // const maxAirSpeed = MOVE_SPEED * 0.5; // Example cap
-             // if(horizontalSpeed > maxAirSpeed) {
-             //    newVelocity.x *= maxAirSpeed / horizontalSpeed;
-             //    newVelocity.z *= maxAirSpeed / horizontalSpeed;
-             // }
+             // Add the air control input velocity influence
+             const deltaTime = scene.getEngine().getDeltaTime() / 1000 || (1/60); // Use fallback delta time if needed
+             newVelocity.x += airTargetVelocity.x * deltaTime;
+             newVelocity.z += airTargetVelocity.z * deltaTime;
         }
 
         // --- Final Velocity Update ---
