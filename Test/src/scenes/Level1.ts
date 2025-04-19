@@ -65,7 +65,7 @@ export class Level1 extends Level {
         playerLight.range = LIGHT_RANGE; // Utilisation de la constante
 
         // Ajout d'un effet de brouillard pour renforcer l'ambiance sombre
-        this.scene.fogMode = Scene.FOGMODE_EXP;
+        //this.scene.fogMode = Scene.FOGMODE_EXP; //ici pour enlever le fog
         this.scene.fogDensity = 0.02; // Ajustez pour plus ou moins de visibilité
         this.scene.fogColor = new Color3(0, 0, 0); // Noir pour un effet sombre
 

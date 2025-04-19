@@ -13,6 +13,6 @@ if (!(canvas instanceof HTMLCanvasElement)) {
 // ✅ Maintenant TypeScript sait que c'est un `HTMLCanvasElement`
 new GameEngine(canvas, (scene) => {
     console.log("🔄 Havok chargé, lancement du niveau 1...");
-    new Level0(scene,canvas);
-    //new Level1(scene, canvas);
+    //new Level0(scene,canvas);
+    new Level1(scene, canvas);
 });
