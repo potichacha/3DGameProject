@@ -2,7 +2,7 @@ import { Scene, Vector3, Quaternion, Matrix, Ray, PickingInfo, PhysicsShapeType 
 import { PhysicsAggregate, PhysicsShapeCapsule } from "@babylonjs/core";
 import { Player } from "../components/Player";
 
-const MOVE_SPEED = 30;
+const DEFAULT_MOVE_SPEED = 30;
 const ROTATION_SPEED = 0.025;
 const JUMP_IMPULSE = 50; // Keep high for now, tune later if jump works
 const GROUND_CHECK_EXTRA_DISTANCE = 0.2;
@@ -10,7 +10,8 @@ const FORWARD_CHECK_DISTANCE = 0.5;
 const AIR_DAMPING_FACTOR = 0.98; // Less aggressive damping
 const AIR_CONTROL_FACTOR = 0.4; // Player has 40% of ground move speed in air
 
-export function setupControls(player: Player) {
+export function setupControls(player: Player, customMoveSpeed?: number) {
+    const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED;
     let playerPhysicsAggregate: PhysicsAggregate | null = player.getPhysics();
     let inputStates = {
         forward: false,
