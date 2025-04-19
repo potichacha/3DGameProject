@@ -7,7 +7,7 @@ export class Player {
     private playerMesh!: Mesh;
     private playerRoot!: TransformNode;
     private physicsCapsule!: Mesh;
-    private physics!: PhysicsAggregate;
+    private physics!: PhysicsAggregate | null;
     private animationGroup: AnimationGroup[] = [];
     private meshLoaded: boolean = false;
     private health: number = 100;
@@ -79,7 +79,7 @@ export class Player {
                 console.error("❌ Aucun mesh chargé !");
                 return;
             }
-            
+
             this.playerRoot = new TransformNode("playerRoot", this.scene);
             result.meshes.forEach(mesh => {
                 if (mesh.name.startsWith("corps_Sphere")) {
@@ -157,6 +157,51 @@ export class Player {
                 }, 100);
             }
         });
+    }
+
+    public disposePhysics() {
+        if (this.physics) {
+            // Note: Disposing the aggregate should handle the body as well.
+            this.physics.dispose();
+            this.physics = null;
+        }
+         // If using PhysicsViewer, would hide here: viewer.hideBody(this.physics.body);
+    }
+
+    public recreatePhysics(position: Vector3) {
+        // Ensure old physics is disposed if it exists
+        this.disposePhysics();
+
+        if (!this.physicsCapsule) {
+            console.error("Cannot recreate physics, capsule mesh does not exist.");
+            return;
+        }
+
+        // Ensure capsule is at the desired position before creating aggregate
+        this.physicsCapsule.position = position;
+
+        this.physics = new PhysicsAggregate(this.physicsCapsule, PhysicsShapeType.CAPSULE,
+            {
+                mass: 5, // Assurez-vous que la masse est suffisante pour réagir aux forces
+                restitution: 0.2, // Ajout d'un léger rebond pour le réalisme
+                friction: 0.8
+            }, // Use stored options
+            this.scene
+        );
+
+        if (this.physics.body) {
+            this.physics.body.setMotionType(PhysicsMotionType.DYNAMIC);
+            this.physics.body.setLinearDamping(0.1);
+            this.physics.body.setAngularDamping(0.1);
+
+            // Reset velocities just in case
+            this.physics.body.setLinearVelocity(Vector3.Zero());
+            this.physics.body.setAngularVelocity(Vector3.Zero());
+
+             // If using PhysicsViewer, would show here: viewer.showBody(this.physics.body);
+        } else {
+            console.error("Failed to create physics body during recreation.");
+        }
     }
 
     stopMovement() {
