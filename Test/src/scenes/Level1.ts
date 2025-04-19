@@ -253,6 +253,9 @@ export class Level1 extends Level {
             if (playerLight) {
                 playerLight.position = this.player.getCapsule().position.clone().add(new Vector3(0, 10, 0));
             }
+            if(this.player.getHealth() <= 0) {
+                //MazeGenerator.deploy(this.scene); //A modifier ici <-------------------------------------------------------
+            }
 
             window.addEventListener("keydown", () => {
                 this.music.playMusic();
@@ -372,7 +375,7 @@ export class Level1 extends Level {
             const ray = new Ray(mesh.position, dirToPlayer);
             const hit = this.scene.pickWithRay(ray, m => m === this.player.getCapsule());
             if (hit && hit.pickedMesh) {
-                enemy.shootAtPlayer(this.scene, this.player.getCapsule().position);
+                enemy.shootAtPlayer(this.scene, this.player);
             }
         }
     }

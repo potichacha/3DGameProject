@@ -54,6 +54,9 @@ export class Player {
         if (material) {
             material.diffuseColor = new Color3(1, 1 - redIntensity, 1 - redIntensity);
         }
+        if (this.health <= 0) {
+            console.error("❌ Joueur éliminé !");
+        }
     }
 
     private createMesh(startPosition: Vector3) {

@@ -1,5 +1,6 @@
 import { Scene, Vector3, SceneLoader, StandardMaterial, Color3, Ray, AbstractMesh, Quaternion, MeshBuilder, PointLight,Mesh } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
+import { Player } from "./Player";
 
 export class Enemy {
     private scene: Scene;
@@ -78,7 +79,7 @@ export class Enemy {
         }
     }
 
-    shootAtPlayer(scene: Scene, playerPosition: Vector3) {
+    shootAtPlayer(scene: Scene, playerPosition: Player) {
         const currentTime = performance.now();
         if (currentTime - this.lastShotTime < 1500) return; // Tir toutes les 2 secondes
         this.lastShotTime = currentTime;
@@ -89,12 +90,11 @@ export class Enemy {
         }
         // Vérifie la ligne de vue directe vers le joueur
         
-        const ray = new Ray(this.mesh.position, playerPosition.subtract(this.mesh.position).normalize());
+        const playerPos = playerPosition.getCapsulePosition(); // ou getMesh().position si besoin
+        const ray = new Ray(this.mesh.position, playerPos.subtract(this.mesh.position).normalize());
+        const direction = playerPos.subtract(this.mesh.position).normalize();
         const hit = scene.pickWithRay(ray, (mesh) => mesh.name === "wall");
         if (hit && hit.pickedMesh) return; // Si un mur bloque la vue, ne pas tirer
-
-        // Direction vers la position du joueur
-        const direction = playerPosition.subtract(this.mesh.position).normalize();
 
         const capsule = MeshBuilder.CreateCapsule("enemyCapsuleProjectile", { height: 1, radius: 0.5 }, scene);
         capsule.visibility = 0;
@@ -122,11 +122,11 @@ export class Enemy {
             projectile.rotation.x += 0.05;
         });
         scene.registerBeforeRender(() => {
-            this.updateEnemyProjectiles();
+            this.updateEnemyProjectiles(playerPosition);
         });  
     }
 
-    public updateEnemyProjectiles() {
+    public updateEnemyProjectiles(player: Player) {
         const delta = this.scene.getEngine().getDeltaTime() / 1000;
     
         this.enemyProjectiles = this.enemyProjectiles.filter(proj => {
@@ -139,12 +139,12 @@ export class Enemy {
             proj.metadata.lifetime -= delta;
     
             // Ici tu peux faire collision avec le joueur, ex :
-            /*const playerCapsule = this.player.getCapsule();
+            const playerCapsule = player.getCapsule();
             if (playerCapsule && playerCapsule.intersectsMesh(proj, false)) {
-                this.player.reduceHealth?.(10); // ou comme tu veux
+                player.reduceHealth?.(10); // ou comme tu veux
                 proj.dispose();
                 return false;
-            }*/
+            }
     
             if (proj.position.length() > 1000 || proj.metadata.lifetime <= 0) {
                 proj.dispose();
