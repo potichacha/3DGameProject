@@ -24,8 +24,8 @@ export class PlatformGenerator {
         this.scene = scene;
 
         this.platformMaterial = new StandardMaterial("platformMat", this.scene);
-        this.platformMaterial.diffuseColor = new Color3(0.6, 0.6, 0.6);
-        this.platformMaterial.specularColor = new Color3(0.1, 0.1, 0.1);
+        this.platformMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
+        this.platformMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
 
         this.endPlatformMaterial = new StandardMaterial("endMat", this.scene);
         this.endPlatformMaterial.diffuseColor = new Color3(0, 1, 0);
@@ -33,45 +33,44 @@ export class PlatformGenerator {
     }
 
     public generatePlatforms(
-        count: number = 20,
-        startPosition: Vector3 = new Vector3(0, 4, 0),
-        minJumpDistance: number = 5,
-        maxJumpDistance: number = 15,
-        maxHeightChange: number = 3,
-        minPlatformSize: Vector3 = new Vector3(3, 1, 3),
-        maxPlatformSize: Vector3 = new Vector3(8, 1, 8)
+        count: number = 25,
+        startPosition: Vector3 = new Vector3(0, 10, 0),
+        minJumpDistance: number = 8,
+        maxJumpDistance: number = 18,
+        maxHeightChange: number = 4,
+        minPlatformSize: Vector3 = new Vector3(6, 1, 6),
+        maxPlatformSize: Vector3 = new Vector3(12, 1, 12),
+        startPlatformSize: Vector3 = new Vector3(20, 2, 20)
     ): PlatformGenerationResult {
 
         const platforms: AbstractMesh[] = [];
         let currentPosition = startPosition.clone();
-        let lastPlatformSize = new Vector3(10, 1, 10); // Start platform size
 
-        const startPlatform = this.createPlatform("startPlatform", currentPosition, lastPlatformSize, this.platformMaterial);
+        const startPlatform = this.createPlatform("startPlatform", currentPosition, startPlatformSize, this.platformMaterial);
         platforms.push(startPlatform);
 
         for (let i = 0; i < count; i++) {
-            const jumpAngle = Math.random() * Math.PI * 0.8 + Math.PI * 0.1; // Bias forward
+            const jumpAngle = Math.random() * Math.PI * 0.9 + Math.PI * 0.05;
             const jumpDistance = minJumpDistance + Math.random() * (maxJumpDistance - minJumpDistance);
             const heightChange = (Math.random() * 2 - 1) * maxHeightChange;
 
             const nextX = currentPosition.x + Math.sin(jumpAngle) * jumpDistance;
             const nextZ = currentPosition.z + Math.cos(jumpAngle) * jumpDistance;
-            const nextY = Math.max(0, currentPosition.y + heightChange); // Don't go too low
+            const nextY = Math.max(1, currentPosition.y + heightChange); // Ensure platforms don't go below Y=1
 
             const platformSize = new Vector3(
                 minPlatformSize.x + Math.random() * (maxPlatformSize.x - minPlatformSize.x),
-                minPlatformSize.y, // Keep height consistent for simplicity
+                minPlatformSize.y,
                 minPlatformSize.z + Math.random() * (maxPlatformSize.z - minPlatformSize.z)
             );
 
             currentPosition = new Vector3(nextX, nextY, nextZ);
             const newPlatform = this.createPlatform(`platform_${i}`, currentPosition, platformSize, this.platformMaterial);
             platforms.push(newPlatform);
-            lastPlatformSize = platformSize;
         }
 
-        const endPosition = currentPosition.add(new Vector3(0, 0, maxJumpDistance)); // Place end zone further
-        const endPlatformSize = new Vector3(15, 1, 15);
+        const endPosition = currentPosition.add(new Vector3(Math.sin(Math.random()*Math.PI*2) * maxJumpDistance, Math.random()*maxHeightChange, Math.cos(Math.random()*Math.PI*2) * maxJumpDistance)); // Place end zone more randomly
+        const endPlatformSize = new Vector3(15, 2, 15);
         const endPlatform = this.createPlatform("endPlatform", endPosition, endPlatformSize, this.endPlatformMaterial);
         platforms.push(endPlatform);
 
@@ -86,11 +85,16 @@ export class PlatformGenerator {
         const platform = MeshBuilder.CreateBox(name, { width: size.x, height: size.y, depth: size.z }, this.scene);
         platform.position = position;
         platform.material = material;
-        platform.checkCollisions = true;
+        platform.checkCollisions = true; // Still useful for raycasting/simple checks if needed
+
         try {
-            new PhysicsAggregate(platform, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
+            // Ensure physics aggregate is created reliably
+            const aggregate = new PhysicsAggregate(platform, PhysicsShapeType.BOX, { mass: 0, friction: 0.8, restitution: 0.1 }, this.scene);
+            if (!aggregate.body) {
+                 console.error(`Failed to create physics body for ${name}`);
+            }
         } catch (e) {
-            console.error(`Failed physics for ${name}: ${e}`);
+            console.error(`Exception during physics aggregate creation for ${name}: ${e}`);
         }
         return platform;
     }
