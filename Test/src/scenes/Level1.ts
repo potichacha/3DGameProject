@@ -76,7 +76,11 @@ export class Level1 extends Level {
         MazeGenerator.deploy(this.scene);
 
         // Charger les meshes pour le niveau 1
-        await SceneLoader.AppendAsync("./src/assets/models/", "level1_environment.glb", this.scene);
+        await SceneLoader.AppendAsync("./src/assets/models/", "level1_environment.glb", this.scene).then(() => {
+            console.log("✅ Fichier level1_environment.glb chargé avec succès !");
+        }).catch((error) => {
+            console.error("❌ Erreur lors du chargement de level1_environment.glb :", error);
+        });
         console.log("🔍 Meshes du niveau 1 chargés !");
         const environmentMesh = this.scene.getMeshByName("__root__");
         if (environmentMesh) {
