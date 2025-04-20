@@ -13,7 +13,7 @@ export class Player {
     private health: number = 100;
     private nameMesh!: string;
 
-    constructor(scene: Scene, startPosition: Vector3,nameMesh: string) {
+    constructor(scene: Scene, startPosition: Vector3, nameMesh: string) {
         this.scene = scene;
         this.nameMesh = nameMesh;
         this.createMesh(startPosition);
@@ -60,7 +60,7 @@ export class Player {
     }
 
     private createMesh(startPosition: Vector3) {
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", this.nameMesh, this.scene).then((result) => {//finaleSinj
+        SceneLoader.ImportMeshAsync("", "./src/assets/models/", this.nameMesh, this.scene).then((result) => {
             console.log("🔍 Meshes importés :", result.meshes);
             console.log("🔍 Meshes importés :", result);
 
@@ -81,16 +81,18 @@ export class Player {
             }
 
             this.playerRoot = new TransformNode("playerRoot", this.scene);
+            this.playerRoot.metadata = { level0: true }; // 💡 Mark root as level0
             result.meshes.forEach(mesh => {
                 if (mesh.name.startsWith("corps_Sphere")) {
                     mesh.parent = this.playerRoot;
+                    mesh.metadata = { level0: true }; // 💡 Mark each mesh as level0
                 }
                 if (mesh.name.startsWith("Ch23_")) {
                     mesh.parent = this.playerRoot;
+                    mesh.metadata = { level0: true }; // 💡 Mark each mesh as level0
                 }
             });
             this.playerMesh = this.playerRoot as unknown as Mesh;
-
 
             if (!this.playerMesh) {
                 console.error("❌ Erreur : Aucun mesh valide trouvé pour le joueur !");
@@ -107,18 +109,26 @@ export class Player {
                 radius: 3.5,
             }, this.scene);
             this.physicsCapsule.visibility = 0;
-            this.physicsCapsule.position = new Vector3(startPosition.x, 4, startPosition.z);
+            this.physicsCapsule.position = new Vector3(startPosition.x, 4, startPosition.z); // Vérifiez la hauteur (y = 4)
             this.physicsCapsule.rotationQuaternion = Quaternion.Identity();
+            this.physicsCapsule.metadata = { level0: true }; // 💡 Mark capsule as level0
 
             this.physics = new PhysicsAggregate(this.physicsCapsule, PhysicsShapeType.CAPSULE, {
                 mass: 5, // Assurez-vous que la masse est suffisante pour réagir aux forces
                 restitution: 0.2, // Ajout d'un léger rebond pour le réalisme
                 friction: 0.8
             }, this.scene);
+
+            if (!this.physics.body) {
+                console.error("❌ Erreur : Physics body non créé !");
+            } else {
+                console.log("✅ Physics body créé avec succès :", this.physics.body);
+            }
+
             this.physics.body.setMotionType(PhysicsMotionType.DYNAMIC);
 
             // ✅ Ajout d'une limite pour éviter que le joueur ne glisse
-            this.physics.body.setLinearDamping(0.1); // Réduit la vitesse progressivement
+            this.physics.body.setLinearDamping(0.5); // Augmentez cette valeur (par exemple, 0.5 ou plus)
             this.physics.body.setAngularDamping(0.1); // Réduit la rotation progressivement
 
             // ✅ Suppression des appels incorrects
@@ -191,7 +201,7 @@ export class Player {
 
         if (this.physics.body) {
             this.physics.body.setMotionType(PhysicsMotionType.DYNAMIC);
-            this.physics.body.setLinearDamping(0.1);
+            this.physics.body.setLinearDamping(0.5); // Augmentez cette valeur (par exemple, 0.5 ou plus)
             this.physics.body.setAngularDamping(0.1);
 
             // Reset velocities just in case
