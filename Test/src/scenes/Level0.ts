@@ -324,9 +324,27 @@ export class Level0 extends Level{
         });
     }
 
-    public disposeLevel() {
+    public async disposeLevel() {
         console.log("🧹 Nettoyage du Level0...");
         // Dispose only resources marked with level0
+        this.scene.meshes.forEach(mesh => {
+            if (mesh.metadata?.level0) {
+                if (mesh.physicsBody) {
+                    console.log("Disposing physics body for", mesh.name);
+                    mesh.physicsBody.dispose();
+                }
+                mesh.dispose(false, true);
+            }
+        });
+
+        if (this.player?.getPhysics()?.body) {
+            this.player?.getPhysics()?.body.dispose();
+        }
+        const playerMesh = this.player.getMesh?.();
+        if (playerMesh?.dispose) {
+            playerMesh.dispose();
+        }
+
         this.scene.meshes.forEach(mesh => {
             if (mesh.metadata?.level0) {
                 mesh.dispose(false, true);
@@ -369,19 +387,23 @@ export class Level0 extends Level{
         document.body.removeChild(this.hudMission);
 
         console.log("✅ Level0 nettoyé !");
+        console.log("🧱 Meshes restants :", this.scene.meshes.map(m => m.name));
+        await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    private loadLevel1() {
+    private async loadLevel1() {
         console.log("🔄 Chargement du niveau 1...");
 
-        this.disposeLevel(); // 🧹 Nettoie le niveau 0 (DOM, événements)
+        await this.disposeLevel(); // 🧹 Nettoie le niveau 0 (DOM, événements)
         //SceneUtils.softClear(this.scene); // 🧹 Nettoyage doux de la scène
 
+        setTimeout(() => {
         import("./Level1").then(({ Level1 }) => {
-            new Level1(this.scene, this.canvas); // ✅ Recharge propre
+            new Level1(this.scene, this.canvas);
         }).catch((error) => {
             console.error("❌ Erreur lors du chargement du niveau 1 :", error);
         });
+    }, 100);
     }
 
     public onLevelComplete(callback: () => void) {
