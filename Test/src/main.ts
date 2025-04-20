@@ -1,7 +1,5 @@
 import { GameEngine } from "./core/GameEngine";
-import { Level1 } from "./scenes/Level1";
-import {Level2} from "./scenes/Level2";
-import {Level0} from "./scenes/Level0";
+import { Menu } from "./scenes/Menu";
 
 const canvas = document.getElementById("gameCanvas");
 
@@ -12,7 +10,6 @@ if (!(canvas instanceof HTMLCanvasElement)) {
 
 // ✅ Maintenant TypeScript sait que c'est un `HTMLCanvasElement`
 new GameEngine(canvas, (scene) => {
-    console.log("🔄 Havok chargé, lancement du niveau 1...");
-    //new Level0(scene,canvas);
-    new Level1(scene, canvas);
+    console.log("🔄 Havok chargé, lancement du menu...");
+    new Menu(scene, canvas); // Lance le Menu au démarrage
 });
