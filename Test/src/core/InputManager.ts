@@ -51,14 +51,13 @@ export function setupControls(player: Player) {
 
     playerPhysics.body.transformNode.getScene().onBeforeRenderObservable.add(() => {
         const body = playerPhysics.body;
-        const transformNode = body.transformNode;
-
-        if (!body || !body.hpBodyId) {
-            console.error("❌ Physics body non initialisé ou invalide !");
+        if (!body || !body.transformNode) {
+            console.warn("⚠️ Corps physique non initialisé !");
             return;
         }
+        const transformNode = body.transformNode;
 
-        if (!transformNode) return;
+        if (!body || !transformNode) return;
 
         let moving = false;
 

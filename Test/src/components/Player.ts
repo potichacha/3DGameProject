@@ -119,10 +119,10 @@ export class Player {
                 friction: 0.8
             }, this.scene);
 
-            if (!this.physics.body) {
-                console.error("❌ Erreur : Physics body non créé !");
+            if (this.physics.body) {
+                console.log("✅ Corps physique du joueur initialisé :", this.physics.body);
             } else {
-                console.log("✅ Physics body créé avec succès :", this.physics.body);
+                console.error("❌ Échec de l'initialisation du corps physique du joueur !");
             }
 
             this.physics.body.setMotionType(PhysicsMotionType.DYNAMIC);
