@@ -1,18 +1,16 @@
-import { Scene, Vector3, Quaternion, Matrix, Ray, PickingInfo, PhysicsShapeType } from "@babylonjs/core";
-import { PhysicsAggregate, PhysicsShapeCapsule } from "@babylonjs/core";
-import { Player } from "../components/Player";
+import {Quaternion, Ray, Vector3} from "@babylonjs/core";
+import {Player} from "../components/Player";
 
 const DEFAULT_MOVE_SPEED = 30;
 const ROTATION_SPEED = 0.025;
-const JUMP_IMPULSE = 50;
+const JUMP_IMPULSE = 45;
 const GROUND_CHECK_EXTRA_DISTANCE = 0.2;
 const FORWARD_CHECK_DISTANCE = 0.5;
 const AIR_DAMPING_FACTOR = 0.98;
-const AIR_CONTROL_FACTOR = 0.4;
+const AIR_CONTROL_FACTOR = 0.9;
 
 export function setupControls(player: Player, customMoveSpeed?: number) {
-    const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED; // Use correct variable name
-    let playerPhysicsAggregate: PhysicsAggregate | null = player.getPhysics();
+    const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED;
     let inputStates = {
         forward: false,
         backward: false,
@@ -32,8 +30,7 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
 
     const playerCapsuleKnownHeight = 8;
     const playerCapsuleKnownRadius = 3.5;
-    const playerCapsuleHalfHeight = playerCapsuleKnownHeight / 2;
-    const capsuleCenterToBottom = playerCapsuleHalfHeight;
+    const capsuleCenterToBottom = playerCapsuleKnownHeight / 2;
 
 
     window.addEventListener("keydown", (event) => {
@@ -76,7 +73,6 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
         const transformNode = player.getCapsule();
 
         if (!body || !transformNode || !body.shape) {
-             playerPhysicsAggregate = player.getPhysics();
             return;
         }
 
@@ -104,7 +100,6 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
         const forwardWorld = transformNode.forward.negate();
         let currentLinVelocity = body.getLinearVelocity() || Vector3.Zero();
         let newVelocity = new Vector3(currentLinVelocity.x, currentLinVelocity.y, currentLinVelocity.z);
-        let canMoveForward = true;
 
         // Calculate desired horizontal movement based *only* on forward/backward input
         let horizontalTargetVelocity = Vector3.Zero();
@@ -113,13 +108,11 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
         }
         // Check forward obstacles only if trying to move forward (and grounded)
         if (inputStates.forward && isGrounded) {
-             const radius = playerCapsuleKnownRadius;
-             const forwardRayOrigin = transformNode.position.add(forwardWorld.scale(radius * 0.5));
-             const forwardRay = new Ray(forwardRayOrigin, forwardWorld, FORWARD_CHECK_DISTANCE);
-             const forwardHit = scene.pickWithRay(forwardRay, (mesh) => mesh.isPickable && mesh.checkCollisions && mesh !== transformNode);
-             if (forwardHit?.pickedMesh) {
-                 canMoveForward = false;
-             } else {
+            const forwardRayOrigin = transformNode.position.add(forwardWorld.scale(playerCapsuleKnownRadius * 0.5));
+            const forwardRay = new Ray(forwardRayOrigin, forwardWorld, FORWARD_CHECK_DISTANCE);
+            const forwardHit = scene.pickWithRay(forwardRay, (mesh) => mesh.isPickable && mesh.checkCollisions && mesh !== transformNode);
+            if (forwardHit?.pickedMesh) {
+            } else {
                  horizontalTargetVelocity.addInPlace(forwardWorld.scale(MOVE_SPEED));
              }
         } else if (inputStates.forward && !isGrounded){ // Allow forward air movement without obstacle check
