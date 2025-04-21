@@ -43,6 +43,7 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
             case "d": inputStates.right = true; break;
             case " ":
                 inputStates.jump = true;
+                player.getAnimationGroups()[2]?.play(true);
                 break;
         }
     });
@@ -63,6 +64,7 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
             case "d": inputStates.right = false; break;
             case " ":
                  inputStates.jump = false;
+                player.getAnimationGroups()[2]?.play(false);
                  break;
         }
     });

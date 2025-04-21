@@ -5,6 +5,7 @@ import {
     StandardMaterial,
     Color3,
     PhysicsAggregate,
+    Texture,
     PhysicsShapeType,
     AbstractMesh
 } from "@babylonjs/core";
@@ -25,7 +26,7 @@ export class PlatformGenerator {
 
         // Standard material for regular platforms
         this.platformMaterial = new StandardMaterial("platformMat", this.scene);
-        this.platformMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7); // Light grey
+        this.platformMaterial.diffuseTexture = new Texture("./src/assets/textures/nuage2.jpg", this.scene);
         this.platformMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
 
         // Distinct material for the end platform

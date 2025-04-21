@@ -12,7 +12,7 @@ export class AssetLoader {
     static loadSkyboxTexture(scene: Scene) {
         const skyboxMaterial = new StandardMaterial("skyBoxMaterial", scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new CubeTexture("textures/skyblock/skyblock", scene);
+        skyboxMaterial.reflectionTexture = new CubeTexture("textures/nuage.avif", scene);
         skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
         return skyboxMaterial;
     }
