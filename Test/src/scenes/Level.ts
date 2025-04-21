@@ -2,7 +2,7 @@ import { Scene, Vector3,FollowCamera } from "@babylonjs/core";
 import { Player } from "../components/Player";
 export abstract class Level {
     protected followCamera!: FollowCamera;
-    protected player!: Player;
+    protected player!: Player | null;
     protected scene: Scene;
     protected canvas: HTMLCanvasElement;
 
@@ -13,7 +13,9 @@ export abstract class Level {
     
     protected setupFollowCamera() {
         this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
-        this.followCamera.lockedTarget = this.player.getCapsule();
+        if (this.player) {
+            this.followCamera.lockedTarget = this.player.getCapsule();
+        }
         this.followCamera.radius = 20; // Rapproche légèrement la caméra
         this.followCamera.heightOffset = 8; // Ajuste la hauteur
         this.followCamera.rotationOffset = 0;
