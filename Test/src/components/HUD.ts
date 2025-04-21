@@ -89,6 +89,11 @@ export class HUD {
             this.distanceElement.style.display = "none"; // ✅ Cache la distance
         }
 
+        hideHealthBar() {
+            this.healthBarContainer.style.display = "none";
+            this.healthBar.style.display = "none";
+        }
+
         showCounter() {
             this.counterElement.style.display = "block"; // ✅ Affiche le compteur
         }
