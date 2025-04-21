@@ -75,6 +75,7 @@ export class Level0 extends Level{
         }, this.scene);
         southWall.position.set(0, wallHeight / 2, groundSize / 2);
         southWall.material = wallMaterial;
+        console.log("🆕 Création de", southWall.name);
         southWall.metadata = { level0: true };
         new PhysicsAggregate(southWall, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         // Mur Est
@@ -101,7 +102,7 @@ export class Level0 extends Level{
         new PhysicsAggregate(westWall, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         
         //gestion collision meuble
-        const petitmeuble = MeshBuilder.CreateBox("collisionBox", {
+        const petitmeuble = MeshBuilder.CreateBox("petitmeuble", {
             width: 20,
             height: 20,
             depth: 10,
@@ -113,7 +114,7 @@ export class Level0 extends Level{
         petitmeuble.metadata = { level0: true };
         new PhysicsAggregate(petitmeuble, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        const lit = MeshBuilder.CreateBox("collisionBox", {
+        const lit = MeshBuilder.CreateBox("lit", {
             width: 28,
             height: 20,
             depth: 50,
@@ -121,11 +122,11 @@ export class Level0 extends Level{
         
         lit.position = new Vector3(53.72, 4, 34.49);
         lit.rotation.y = Math.PI / 2;
-        lit.visibility = 0;
+        lit.visibility = 1;
         lit.metadata = { level0: true };
         new PhysicsAggregate(lit, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        const porte = MeshBuilder.CreateBox("collisionBox", {
+        const porte = MeshBuilder.CreateBox("porte", {
             width: 10,
             height: 20,
             depth: 25,
@@ -133,11 +134,11 @@ export class Level0 extends Level{
         
         porte.position = new Vector3(-30, 0, 65);
         porte.rotation.y = Math.PI / 2;
-        porte.visibility = 0;
+        porte.visibility = 1;
         porte.metadata = { level0: true };
         new PhysicsAggregate(porte, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         
-        const lampe = MeshBuilder.CreateBox("collisionBox", {
+        const lampe = MeshBuilder.CreateBox("lampe", {
             width: 18,
             height: 20,
             depth: 10,
@@ -145,11 +146,11 @@ export class Level0 extends Level{
         
         lampe.position = new Vector3(72, 0, 72);
         lampe.rotation.y = Math.PI / 2;
-        lampe.visibility = 0;
+        lampe.visibility = 1;
         lampe.metadata = { level0: true };
         new PhysicsAggregate(lampe, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        const grandmeuble = MeshBuilder.CreateBox("collisionBox", {
+        const grandmeuble = MeshBuilder.CreateBox("grandmeuble", {
             width: 20,
             height: 20,
             depth: 22,
@@ -157,11 +158,11 @@ export class Level0 extends Level{
         
         grandmeuble.position = new Vector3(72, 0, -60);
         grandmeuble.rotation.y = Math.PI / 2;
-        grandmeuble.visibility = 0;
+        grandmeuble.visibility = 1;
         grandmeuble.metadata = { level0: true };
         new PhysicsAggregate(grandmeuble, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        const chaise = MeshBuilder.CreateBox("collisionBox", {
+        const chaise = MeshBuilder.CreateBox("chaise", {
             width: 15,
             height: 20,
             depth: 14,
@@ -169,11 +170,11 @@ export class Level0 extends Level{
         
         chaise.position = new Vector3(-36, 0, -40);
         chaise.rotation.y = Math.PI / 2;
-        chaise.visibility = 0;
+        chaise.visibility = 1;
         chaise.metadata = { level0: true };
         new PhysicsAggregate(chaise, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
-        const bureau = MeshBuilder.CreateBox("collisionBox", {
+        const bureau = MeshBuilder.CreateBox("bureau", {
             width: 20,
             height: 20,
             depth: 35,
@@ -181,7 +182,7 @@ export class Level0 extends Level{
         
         bureau.position = new Vector3(-30, 0, -61);
         bureau.rotation.y = Math.PI / 2;
-        bureau.visibility = 0;
+        bureau.visibility = 1;
         bureau.metadata = { level0: true };
         new PhysicsAggregate(bureau, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -192,7 +193,7 @@ export class Level0 extends Level{
             depth: 10,
         }, this.scene);
         ordinateur.position = new Vector3(-22.53, 4, -47.48); // Updated position of the computer
-        ordinateur.visibility = 0;
+        ordinateur.visibility = 1;
         ordinateur.metadata = { level0: true };
 
         this.interactionHint = document.createElement("div");
@@ -306,7 +307,7 @@ export class Level0 extends Level{
 
         // Ajout de la fonction pour afficher les logs constants
         this.scene.onBeforeRenderObservable.add(() => {
-            console.log("📍 Player position:", this.player.getCapsulePosition());
+            //console.log("📍 Player position:", this.player.getCapsulePosition());
         });
 
         // Déclenche la fin du niveau après un délai (par exemple, une cinématique ou un événement)
@@ -329,6 +330,7 @@ export class Level0 extends Level{
         // Dispose only resources marked with level0
         this.scene.meshes.forEach(mesh => {
             if (mesh.metadata?.level0) {
+                console.log("Disposing", mesh.name);
                 if (mesh.physicsBody) {
                     console.log("Disposing physics body for", mesh.name);
                     mesh.physicsBody.dispose();
@@ -374,6 +376,11 @@ export class Level0 extends Level{
                 cam.dispose();
             }
         });
+        this.scene.meshes.forEach(mesh => {
+            if (!mesh.metadata?.level0) {
+                console.warn("⚠️ Mesh sans metadata.level0 :", mesh.name);
+            }
+        });
 
         // Clear observables and keyboard events
         this.scene.onBeforeRenderObservable.clear();
@@ -385,9 +392,16 @@ export class Level0 extends Level{
         // Remove DOM elements
         document.body.removeChild(this.interactionHint);
         document.body.removeChild(this.hudMission);
+        this.scene.meshes
+    .filter(m => m.name !== "__root__")
+    .forEach(m => {
+        console.warn("💣 Force dispose restant :", m.name);
+        m.dispose(false, true);
+    });
 
         console.log("✅ Level0 nettoyé !");
-        console.log("🧱 Meshes restants :", this.scene.meshes.map(m => m.name));
+        const restants = this.scene.meshes.filter(m => m.name !== "__root__");
+        console.log("🧱 Meshes vraiment restants :", restants.map(m => m.name));
         await new Promise(resolve => setTimeout(resolve, 100));
     }
 
@@ -397,13 +411,11 @@ export class Level0 extends Level{
         await this.disposeLevel(); // 🧹 Nettoie le niveau 0 (DOM, événements)
         //SceneUtils.softClear(this.scene); // 🧹 Nettoyage doux de la scène
 
-        setTimeout(() => {
-        import("./Level1").then(({ Level1 }) => {
-            new Level1(this.scene, this.canvas);
-        }).catch((error) => {
-            console.error("❌ Erreur lors du chargement du niveau 1 :", error);
+        this.scene.executeWhenReady(() => {
+            import("./Level1").then(({ Level1 }) => {
+                new Level1(this.scene, this.canvas);
+            }).catch(console.error);
         });
-    }, 100);
     }
 
     public onLevelComplete(callback: () => void) {
