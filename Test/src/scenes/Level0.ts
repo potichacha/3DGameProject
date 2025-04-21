@@ -122,7 +122,7 @@ export class Level0 extends Level{
         
         lit.position = new Vector3(53.72, 4, 34.49);
         lit.rotation.y = Math.PI / 2;
-        lit.visibility = 1;
+        lit.visibility = 0;
         lit.metadata = { level0: true };
         new PhysicsAggregate(lit, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -134,7 +134,7 @@ export class Level0 extends Level{
         
         porte.position = new Vector3(-30, 0, 65);
         porte.rotation.y = Math.PI / 2;
-        porte.visibility = 1;
+        porte.visibility = 0;
         porte.metadata = { level0: true };
         new PhysicsAggregate(porte, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
         
@@ -146,7 +146,7 @@ export class Level0 extends Level{
         
         lampe.position = new Vector3(72, 0, 72);
         lampe.rotation.y = Math.PI / 2;
-        lampe.visibility = 1;
+        lampe.visibility = 0;
         lampe.metadata = { level0: true };
         new PhysicsAggregate(lampe, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -158,7 +158,7 @@ export class Level0 extends Level{
         
         grandmeuble.position = new Vector3(72, 0, -60);
         grandmeuble.rotation.y = Math.PI / 2;
-        grandmeuble.visibility = 1;
+        grandmeuble.visibility = 0;
         grandmeuble.metadata = { level0: true };
         new PhysicsAggregate(grandmeuble, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -170,7 +170,7 @@ export class Level0 extends Level{
         
         chaise.position = new Vector3(-36, 0, -40);
         chaise.rotation.y = Math.PI / 2;
-        chaise.visibility = 1;
+        chaise.visibility = 0;
         chaise.metadata = { level0: true };
         new PhysicsAggregate(chaise, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -182,7 +182,7 @@ export class Level0 extends Level{
         
         bureau.position = new Vector3(-30, 0, -61);
         bureau.rotation.y = Math.PI / 2;
-        bureau.visibility = 1;
+        bureau.visibility = 0;
         bureau.metadata = { level0: true };
         new PhysicsAggregate(bureau, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
 
@@ -193,7 +193,7 @@ export class Level0 extends Level{
             depth: 10,
         }, this.scene);
         ordinateur.position = new Vector3(-22.53, 4, -47.48); // Updated position of the computer
-        ordinateur.visibility = 1;
+        ordinateur.visibility = 0;
         ordinateur.metadata = { level0: true };
 
         this.interactionHint = document.createElement("div");

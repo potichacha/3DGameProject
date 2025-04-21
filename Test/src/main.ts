@@ -14,6 +14,6 @@ if (!(canvas instanceof HTMLCanvasElement)) {
 // ✅ Maintenant TypeScript sait que c'est un `HTMLCanvasElement`
 new GameEngine(canvas, (scene) => {
     console.log("🔄 Havok chargé, lancement du menu...");
-    //new Menu(scene, canvas); // Lance le Menu au démarrage
-    new Level1(scene, canvas); // Lance le Level1 au démarrage
+    new Menu(scene, canvas); // Lance le Menu au démarrage
+    //new Level1(scene, canvas); // Lance le Level1 au démarrage
 });
