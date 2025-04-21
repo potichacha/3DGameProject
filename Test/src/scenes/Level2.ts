@@ -4,7 +4,9 @@ import {
     HemisphericLight,
     MeshBuilder,
     FollowCamera,
+    StandardMaterial,
     PointLight,
+    Texture,
     Quaternion, // Import Quaternion
     AbstractMesh // Import AbstractMesh
 } from "@babylonjs/core";
@@ -54,9 +56,10 @@ export class Level2 extends Level {
         this.playerLight.setEnabled(false); // Initially disabled until player spawns
 
         // Setup skybox
-        const skyboxMaterial = AssetLoader.loadSkyboxTexture(this.scene);
+        const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
+                groundMaterial.diffuseTexture = new Texture("./src/assets/textures/cloud2.jpg", this.scene);
         this.skybox = MeshBuilder.CreateBox("skyBox", { size: 1500.0 }, this.scene);
-        this.skybox.material = skyboxMaterial;
+        this.skybox.material = groundMaterial;
 
         // Define start position for platform generation
         const platformStartPosition = new Vector3(0, 10, 0);
@@ -86,7 +89,7 @@ export class Level2 extends Level {
             );
 
             // Create player instance
-            this.player = new Player(this.scene, playerInitialPosition, "sinj.glb"); // Use appropriate mesh name
+            this.player = new Player(this.scene, playerInitialPosition, "SinjUltimeV2.glb"); // Use appropriate mesh name
             await this.player.meshReady();
 
             if (!this.player || !this.player.getCapsule()) {
