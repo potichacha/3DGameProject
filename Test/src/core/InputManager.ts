@@ -9,7 +9,7 @@ const FORWARD_CHECK_DISTANCE = 0.5;
 const AIR_DAMPING_FACTOR = 0.98;
 const AIR_CONTROL_FACTOR = 0.9;
 
-export function setupControls(player: Player, customMoveSpeed?: number) {
+export function setupControls(player: Player, customMoveSpeed?: number){
     const MOVE_SPEED = customMoveSpeed ?? DEFAULT_MOVE_SPEED;
     let inputStates = {
         forward: false,
@@ -43,28 +43,34 @@ export function setupControls(player: Player, customMoveSpeed?: number) {
             case "d": inputStates.right = true; break;
             case " ":
                 inputStates.jump = true;
-                player.getAnimationGroups()[2]?.play(true);
+                if(player.getLevel() != 1){
+                    player.getAnimationGroups()[2]?.play(true);
+                }
                 break;
         }
     });
 
     window.addEventListener("keyup", (event) => {
+        const currentAggregate = player.getPhysics();
         switch (event.key.toLowerCase()) {
             case "z":
                 inputStates.forward = false;
                 player.getAnimationGroups()[1]?.stop();
-                player.getPhysics()?.body.setLinearVelocity(new Vector3(0, 0, 0));
+                if (currentAggregate) currentAggregate.body.setLinearVelocity(new Vector3(0, 0, 0));
                 break;
             case "s":
                 inputStates.backward = false;
                 player.getAnimationGroups()[1]?.stop();
-                player.getPhysics()?.body.setLinearVelocity(new Vector3(0, 0, 0));
+                if (currentAggregate) currentAggregate.body.setLinearVelocity(new Vector3(0, 0, 0));
                 break;
             case "q": inputStates.left = false; break;
             case "d": inputStates.right = false; break;
             case " ":
-                 inputStates.jump = false;
-                player.getAnimationGroups()[2]?.play(false);
+                inputStates.jump = false;
+                if(player.getLevel() != 1){
+                    player.getAnimationGroups()[2]?.play(false);
+                }
+                
                  break;
         }
     });

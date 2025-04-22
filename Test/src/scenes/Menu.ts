@@ -1,16 +1,20 @@
 import { Scene } from "@babylonjs/core";
 import { Level0 } from "./Level0";
+import { Level2 } from "./Level2";
+import { Music } from "../music/music";
 
 export class Menu {
     private scene: Scene;
     private canvas: HTMLCanvasElement;
+    public music!: Music;
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
         this.canvas = canvas;
         this.createMenuUI();
+        this.music= new Music("./src/music/soundstrack/dream-day.mp3");
     }
-
+    
     private createMenuUI() {
         const container = document.createElement("div");
         container.id = "mainMenu";
@@ -35,6 +39,9 @@ export class Menu {
         title.style.fontSize = "64px";
         title.style.marginBottom = "50px";
         container.appendChild(title);
+        window.addEventListener("click", () => {
+            this.music.playMusic();
+        }, { once: true });
 
         const createButton = (text: string, onClick: () => void) => {
             const btn = document.createElement("button");
@@ -58,7 +65,9 @@ export class Menu {
 
         container.appendChild(createButton("Nouvelle Partie", () => {
             container.remove();
-            new Level0(this.scene, this.canvas);
+            this.music.stopMusic();
+            this.music.setVolume(0);
+            new Level2(this.scene, this.canvas);
         }));
 
         container.appendChild(createButton("Continuer Partie", () => {

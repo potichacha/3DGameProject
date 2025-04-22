@@ -37,7 +37,7 @@ export class PNJ {
 
     public getPosition(): Vector3 {
         const position = this.mesh ? this.mesh.position : Vector3.Zero();
-        console.log(`📍 Position du PNJ : ${position}`);
+        //console.log(`📍 Position du PNJ : ${position}`);
         return position;
     }
 

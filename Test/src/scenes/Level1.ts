@@ -45,7 +45,7 @@ export class Level1 extends Level {
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         super(scene, canvas);
         this.hud = new HUD();
-        this.music = new Music("./src/music/soundstrack/Item Bounce - Kirby Air Ride.mp3");
+        this.music = new Music("./src/music/soundstrack/maze.mp3");
         this.missionManager = new MissionManager(this.hud);
         this.dialogManager = new DialogManager(scene);
         this.init();
@@ -85,11 +85,11 @@ export class Level1 extends Level {
         MazeGenerator.deploy(this.scene);
 
         const playerStart = MazeGenerator.spawnZones.playerStart;
-        this.player = new Player(this.scene, playerStart,"SinjUltime.glb");
+        this.player = new Player(this.scene, playerStart,"SinjUltime.glb",1);
         this.projectiles = new Projectile(this.scene, this.player, this.enemies);
         await this.player.meshReady();
 
-        this.setupFollowCamera();
+        super.setupFollowCamera();
         this.setupFreeCamera();
         this.setupTopViewCamera();
         this.setupCameraSwitch();
@@ -120,18 +120,6 @@ export class Level1 extends Level {
             this.pnj.enableInteraction(() => this.handlePNJInteraction(), () => this.isDialogActive);
         });
         console.log("✅ Niveau 1 prêt !");
-    }
-
-    protected setupFollowCamera() {
-        this.followCamera = new FollowCamera("FollowCamera", new Vector3(0, 0, 0), this.scene);
-        this.followCamera.lockedTarget = this.player.getCapsule();
-        this.followCamera.radius = 20; // Rapproche légèrement la caméra
-        this.followCamera.heightOffset = 8; // Ajuste la hauteur
-        this.followCamera.rotationOffset = 0;
-        this.followCamera.cameraAcceleration = 0.5;
-        this.followCamera.maxCameraSpeed = 10;
-        this.followCamera.inputs.clear();
-        this.scene.activeCamera = this.followCamera;
     }
 
     private setupFreeCamera() {
@@ -279,14 +267,13 @@ export class Level1 extends Level {
             if(this.player.getHealth() <= 0) {
                 //MazeGenerator.deploy(this.scene); //A modifier ici <-------------------------------------------------------
             }
-
-            window.addEventListener("keydown", () => {
-                this.music.playMusic();
-            }, { once: true });
-            window.addEventListener("click", () => {
-                this.music.playMusic();
-            }, { once: true });
         });
+        window.addEventListener("keydown", () => {
+            this.music.playMusic();
+        }, { once: true });
+        window.addEventListener("click", () => {
+            this.music.playMusic();
+        }, { once: true });
     }
 
     private collectItem() {

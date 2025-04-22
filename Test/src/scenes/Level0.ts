@@ -8,6 +8,7 @@ import { setupControls } from "../core/InputManager";
 import { Level } from "./Level";
 import { DialogManager } from "../Dialog/DialogManager";
 import { SceneUtils } from "../utils/SceneUtils";
+import { Music } from "../music/music";
 
 export class Level0 extends Level{
     protected scene!: Scene;
@@ -19,9 +20,11 @@ export class Level0 extends Level{
     private hudMission!: HTMLDivElement;
     private handleSleepMission!: (event: KeyboardEvent) => void;
     private handleComputerInteraction!: () => void;
+    private music: Music;
 
     constructor(scene: Scene,canvas: HTMLCanvasElement) {
         super(scene, canvas);
+        this.music = new Music("./src/music/soundstrack/rendez-vous.mp3");
         this.init();
     }
 
@@ -120,7 +123,7 @@ export class Level0 extends Level{
             depth: 50,
         }, this.scene);
         
-        lit.position = new Vector3(53.72, 4, 34.49);
+        lit.position = new Vector3(65, 0, 52);
         lit.rotation.y = Math.PI / 2;
         lit.visibility = 0;
         lit.metadata = { level0: true };
@@ -257,7 +260,7 @@ export class Level0 extends Level{
         this.handleSleepMission = (event: KeyboardEvent) => {
             if (event.key.toLowerCase() === "e") {
                 const playerPosition = this.player.getCapsulePosition();
-                const distanceToBed1 = Vector3.Distance(playerPosition, new Vector3(44.579, 4, 16.979));
+                const distanceToBed1 = Vector3.Distance(playerPosition, new Vector3(49, 4, 34));
                 const distanceToBed2 = Vector3.Distance(playerPosition, new Vector3(31.231, 4, 62.546));
                 if (distanceToBed1 < 10 || distanceToBed2 < 10) {
                     console.log("💤 Aller au lit !");
@@ -266,11 +269,13 @@ export class Level0 extends Level{
             }
         };
 
-        this.scene.onBeforeRenderObservable.add(() => {
+        this.scene.onBeforeRenderObservable.add(() => { 
             const playerPosition = this.player.getCapsulePosition();
             const distanceToComputer = Vector3.Distance(playerPosition, ordinateur.position);
-            const distanceToBed1 = Vector3.Distance(playerPosition, new Vector3(44.579, 4, 16.979));
+            const distanceToBed1 = Vector3.Distance(playerPosition, new Vector3(49, 4, 34));
             const distanceToBed2 = Vector3.Distance(playerPosition, new Vector3(31.231, 4, 62.546));
+            //console.log("Distance to Bed 1:", distanceToBed1);
+            //console.log("Distance to Bed 2:", distanceToBed2);
 
             if (distanceToComputer < 10) {
                 this.interactionHint.innerText = "Appuyez sur E pour utiliser l'ordinateur";
@@ -296,19 +301,14 @@ export class Level0 extends Level{
         });
 
         // Gestion personnage et caméra
-        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb"); // Removed the extra "level0" argument
+        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb",0); // Removed the extra "level0" argument
         await this.player.meshReady();
         this.player.getMesh().scaling = new Vector3(0.16, 0.16, 0.16);
         setupControls(this.player, 240);
         super.setupFollowCamera();
         this.followCamera.heightOffset = 30; 
         this.followCamera.radius = 80;
-        // this.update(); // Pour debug la position joueur
-
-        // Ajout de la fonction pour afficher les logs constants
-        this.scene.onBeforeRenderObservable.add(() => {
-            //console.log("📍 Player position:", this.player.getCapsulePosition());
-        });
+        this.update(); // Pour debug la position joueur
 
         // Déclenche la fin du niveau après un délai (par exemple, une cinématique ou un événement)
         setTimeout(() => {
@@ -321,8 +321,15 @@ export class Level0 extends Level{
 
     protected update() {
         this.scene.onBeforeRenderObservable.add(() => {
-            console.log("📍 Player position:", this.player.getCapsulePosition());
+            //console.log("📍 Player position:", this.player.getCapsulePosition());
+            
         });
+        window.addEventListener("keydown", () => {
+            this.music.playMusic();
+        }, { once: true });
+        window.addEventListener("click", () => {
+            this.music.playMusic();
+        }, { once: true });
     }
 
     public async disposeLevel() {
@@ -342,6 +349,7 @@ export class Level0 extends Level{
         if (this.player?.getPhysics()?.body) {
             this.player?.getPhysics()?.body.dispose();
         }
+        
         const playerMesh = this.player.getMesh?.();
         if (playerMesh?.dispose) {
             playerMesh.dispose();
@@ -378,7 +386,6 @@ export class Level0 extends Level{
         });
         this.scene.meshes.forEach(mesh => {
             if (!mesh.metadata?.level0) {
-                console.warn("⚠️ Mesh sans metadata.level0 :", mesh.name);
             }
         });
 
@@ -395,13 +402,13 @@ export class Level0 extends Level{
         this.scene.meshes
     .filter(m => m.name !== "__root__")
     .forEach(m => {
-        console.warn("💣 Force dispose restant :", m.name);
         m.dispose(false, true);
     });
-
-        console.log("✅ Level0 nettoyé !");
+        this.music.stopMusic();
+        console.log("✅ Level nettoyé !");
         const restants = this.scene.meshes.filter(m => m.name !== "__root__");
         console.log("🧱 Meshes vraiment restants :", restants.map(m => m.name));
+        this.scene.onBeforeRenderObservable.clear();
         await new Promise(resolve => setTimeout(resolve, 100));
     }
 
