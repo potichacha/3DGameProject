@@ -1,6 +1,7 @@
 import { Scene, Vector3, SceneLoader, Quaternion, MeshBuilder, Mesh, FollowCamera, Ray, StandardMaterial, Color3, TransformNode } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType, PhysicsMotionType, AnimationGroup } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
+import { HUD } from "../components/HUD"; // Import HUD
 
 export class Player {
     private scene: Scene;
@@ -13,10 +14,12 @@ export class Player {
     private health: number = 100;
     private nameMesh!: string;
     private level!: number;
+    private hud: HUD; // Add a reference to the HUD instance
 
-    constructor(scene: Scene, startPosition: Vector3, nameMesh: string, level: number) {
+    constructor(scene: Scene, startPosition: Vector3, nameMesh: string, hud: HUD,level: number) {
         this.scene = scene;
         this.nameMesh = nameMesh;
+        this.hud = hud; // Initialize the HUD instance
         this.createMesh(startPosition);
         this.level = level;
     }
@@ -50,16 +53,25 @@ export class Player {
     }
 
     reduceHealth(amount: number) {
+        if (this.health <= 0) {
+            console.warn("⚠️ Le joueur est déjà éliminé, pas de réduction de santé.");
+            return;
+        }
+
         this.health = Math.max(0, this.health - amount);
         console.log(`🛡️ Joueur touché ! Santé restante : ${this.health}`);
+
+        this.hud.updatePlayerHealth(this.health); // Update the HUD with the new health value
 
         const redIntensity = (100 - this.health) / 100;
         const material = this.playerMesh.material as StandardMaterial;
         if (material) {
             material.diffuseColor = new Color3(1, 1 - redIntensity, 1 - redIntensity);
         }
+
         if (this.health <= 0) {
             console.error("❌ Joueur éliminé !");
+            this.stopMovement(); // Arrête tout mouvement du joueur
         }
     }
 

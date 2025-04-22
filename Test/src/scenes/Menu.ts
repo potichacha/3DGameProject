@@ -17,7 +17,6 @@ export class Menu {
     
     private createMenuUI() {
         const container = document.createElement("div");
-        container.id = "mainMenu";
         Object.assign(container.style, {
             position: "absolute",
             top: "0",
@@ -33,9 +32,12 @@ export class Menu {
             fontFamily: "Arial, sans-serif",
             zIndex: "1000"
         });
+        return container;
+    }
 
+    private createTitle(text: string): HTMLHeadingElement {
         const title = document.createElement("h1");
-        title.textContent = "🌙 Dreamweaver";
+        title.textContent = text;
         title.style.fontSize = "64px";
         title.style.marginBottom = "50px";
         container.appendChild(title);
@@ -79,5 +81,26 @@ export class Menu {
         }));
 
         document.body.appendChild(container);
+        return title;
+    }
+
+    private createButton(text: string, onClick: () => void): HTMLButtonElement {
+        const btn = document.createElement("button");
+        btn.textContent = text;
+        Object.assign(btn.style, {
+            padding: "15px 30px",
+            fontSize: "20px",
+            margin: "10px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            backgroundColor: "#444",
+            color: "white",
+            transition: "0.3s",
+        });
+        btn.onmouseover = () => (btn.style.backgroundColor = "#666");
+        btn.onmouseleave = () => (btn.style.backgroundColor = "#444");
+        btn.onclick = onClick;
+        return btn;
     }
 }
