@@ -1,10 +1,12 @@
 import { Scene } from "@babylonjs/core";
 import { Level0 } from "./Level0";
 import { Level1 } from "./Level1";
+import { Music } from "../music/music";
 
 export class Menu {
     private scene: Scene;
     private canvas: HTMLCanvasElement;
+    private music: Music= new Music("./src/music/soundstrack/dream-day.mp3");
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;
@@ -36,6 +38,7 @@ export class Menu {
         container.appendChild(optionsButton);
 
         document.body.appendChild(container);
+        this.music.playMusic();
     }
 
     private createNewGameMenu() {
@@ -46,6 +49,7 @@ export class Menu {
 
         const fullGameButton = this.createButton("Jeu Complet", () => {
             container.remove();
+            this.music.stopMusic();
             new Level0(this.scene, this.canvas); // Lance le niveau 0
         });
 
@@ -74,11 +78,13 @@ export class Menu {
 
         const level1Button = this.createButton("Niveau 1", () => {
             container.remove();
+            this.music.stopMusic();
             new Level1(this.scene, this.canvas); // Lance le niveau 1
         });
 
         const level2Button = this.createButton("Niveau 2", () => {
             container.remove();
+            this.music.stopMusic();
             import("./Level2").then(({ Level2 }) => {
                 new Level2(this.scene, this.canvas); // Lance le niveau 2
             }).catch((error) => {
