@@ -16,7 +16,7 @@ import { PlatformGenerator, PlatformGenerationResult } from "../procedural/Platf
 import { setupControls } from "../core/InputManager";
 import { AssetLoader } from "../assets/assetLoader";
 import { HUD } from "../components/HUD";
-
+import {Music} from "../music/music";
 // Assuming SceneUtils might be used later
 
 export class Level2 extends Level {
@@ -33,6 +33,7 @@ export class Level2 extends Level {
     private globalLight!: HemisphericLight; // Keep track of light
     private updateObserver: any = null;
     private fallDetectionObserver: any = null; // Observer for fall detection
+    private music: Music = new Music("./src/music/soundstrack/akanegakubo.mp3");
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         super(scene, canvas);
@@ -89,7 +90,7 @@ export class Level2 extends Level {
             );
 
             // Create player instance
-            this.player = new Player(this.scene, playerInitialPosition, "SinjUltimeV2.glb"); // Use appropriate mesh name
+            this.player = new Player(this.scene, playerInitialPosition, "SinjUltimeV2.glb",2); // Use appropriate mesh name
             await this.player.meshReady();
 
             if (!this.player || !this.player.getCapsule()) {
@@ -108,6 +109,12 @@ export class Level2 extends Level {
             this.startUpdateLoop(); // Start the main update loop for HUD etc.
             this.resetPlayerPosition(); // Ensure player starts correctly positioned
 
+            window.addEventListener("keydown", () => {
+                this.music.playMusic();
+            }, { once: true });
+            window.addEventListener("click", () => {
+                this.music.playMusic();
+            }, { once: true });
             console.log("✅ Level 2 Initialized Successfully");
         });
     }

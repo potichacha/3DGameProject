@@ -2,8 +2,8 @@
 
 export class Music {
 
-    private audioElement: HTMLAudioElement;
-    private musique : string;
+    public audioElement: HTMLAudioElement;
+    public musique : string;
 
     constructor(musique: string) {
         this.musique = musique;
@@ -13,7 +13,7 @@ export class Music {
         this.audioElement.loop = true; // Loop pour la musique
         this.audioElement.volume = 0.1; // Ajuster le volume de la musique
     }
-
+    
     public playMusic() {
         this.audioElement.play().then(() => {
             //console.log("Musique de fond en lecture !");
@@ -23,6 +23,7 @@ export class Music {
     }
 
     public stopMusic() {
+        console.log("Arrêt musique", this.audioElement.src);
         this.audioElement.pause();
         this.audioElement.currentTime = 0; // Rewind à 0
     }

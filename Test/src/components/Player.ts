@@ -12,13 +12,17 @@ export class Player {
     private meshLoaded: boolean = false;
     private health: number = 100;
     private nameMesh!: string;
+    private level!: number;
 
-    constructor(scene: Scene, startPosition: Vector3, nameMesh: string) {
+    constructor(scene: Scene, startPosition: Vector3, nameMesh: string, level: number) {
         this.scene = scene;
         this.nameMesh = nameMesh;
         this.createMesh(startPosition);
+        this.level = level;
     }
-
+    getLevel() {
+        return this.level;
+    }
     getMesh() {
         return this.playerMesh;
     }
