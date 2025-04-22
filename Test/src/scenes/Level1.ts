@@ -85,7 +85,7 @@ export class Level1 extends Level {
         MazeGenerator.deploy(this.scene);
 
         const playerStart = MazeGenerator.spawnZones.playerStart;
-        this.player = new Player(this.scene, playerStart,"SinjUltime.glb");
+        this.player = new Player(this.scene, playerStart, "SinjUltime.glb", this.hud); // Pass the HUD instance
         this.projectiles = new Projectile(this.scene, this.player, this.enemies);
         await this.player.meshReady();
 
