@@ -90,7 +90,7 @@ export class Level2 extends Level {
             );
 
             // Create player instance
-            this.player = new Player(this.scene, playerInitialPosition, "SinjUltimeV2.glb",2); // Use appropriate mesh name
+            this.player = new Player(this.scene, playerInitialPosition, "SinjUltimeV2.glb", this.hud, 2); // Use appropriate mesh name
             await this.player.meshReady();
 
             if (!this.player || !this.player.getCapsule()) {

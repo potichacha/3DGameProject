@@ -9,6 +9,7 @@ import { Level } from "./Level";
 import { DialogManager } from "../Dialog/DialogManager";
 import { SceneUtils } from "../utils/SceneUtils";
 import { Music } from "../music/music";
+import { HUD } from "../components/HUD"; // Import the HUD class
 
 export class Level0 extends Level{
     protected scene!: Scene;
@@ -301,7 +302,8 @@ export class Level0 extends Level{
         });
 
         // Gestion personnage et caméra
-        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb",0); // Removed the extra "level0" argument
+        const hud = new HUD(); // Create an instance of HUD
+        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb", hud, 0); // Pass the HUD instance
         await this.player.meshReady();
         this.player.getMesh().scaling = new Vector3(0.16, 0.16, 0.16);
         setupControls(this.player, 240);
