@@ -1,7 +1,7 @@
 import { Scene } from "@babylonjs/core";
 import { Level0 } from "./Level0";
 import { Level1 } from "./Level1";
-import { Music } from "../music/music";
+import { Music } from "../../public/music/music";
 
 export class Menu {
     private scene: Scene;

@@ -16,7 +16,7 @@ import { PlatformGenerator, PlatformGenerationResult } from "../procedural/Platf
 import { setupControls } from "../core/InputManager";
 import { AssetLoader } from "../assets/assetLoader";
 import { HUD } from "../components/HUD";
-import {Music} from "../music/music";
+import {Music} from "../../public/music/music";
 // Assuming SceneUtils might be used later
 
 export class Level2 extends Level {

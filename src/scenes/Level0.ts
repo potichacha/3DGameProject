@@ -8,7 +8,7 @@ import { setupControls } from "../core/InputManager";
 import { Level } from "./Level";
 import { DialogManager } from "../Dialog/DialogManager";
 import { SceneUtils } from "../utils/SceneUtils";
-import { Music } from "../music/music";
+import { Music } from "../../public/music/music";
 
 export class Level0 extends Level{
     protected scene!: Scene;

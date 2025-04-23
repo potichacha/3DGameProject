@@ -10,7 +10,7 @@ import { MazeGenerator } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
 import { Enemy } from "../components/Enemy";
-import { Music } from "../music/music";
+import { Music } from "../../public/music/music";
 import { PNJ } from "../components/PNJ";
 import { DialogManager } from "../Dialog/DialogManager";
 import { MissionManager } from "../core/MissionManager";
