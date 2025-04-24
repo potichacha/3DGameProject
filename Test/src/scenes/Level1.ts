@@ -212,7 +212,7 @@ export class Level1 extends Level {
             // Pas encore vu l’intro : ne rien afficher
             this.hud.hideCounter();
             this.hud.hideDistance();
-            this.hud.updateMission("");
+            this.hud.updateMission(""); // Efface la mission
             return;
         }
 
@@ -232,7 +232,7 @@ export class Level1 extends Level {
             const closest = this.getClosestCollectible();
             if (closest && playerPosition) {
                 const dist = Vector3.Distance(playerPosition, closest.getPosition());
-                this.hud.updateMission("Collecter les collectibles");
+                this.hud.updateMission("Collecter les collectibles"); // Affiche uniquement si nécessaire
                 this.hud.updateDistance(dist, "Collectible le plus proche");
                 this.hud.showCollectiblesHUD();
                 this.hud.update(this.collectedCount, this.totalCollectibles);
