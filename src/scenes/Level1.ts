@@ -10,7 +10,7 @@ import { MazeGenerator } from "../procedural/MazeGenerator";
 import { Collectible } from "../components/Collectible";
 import { HUD } from "../components/HUD";
 import { Enemy } from "../components/Enemy";
-import { Music } from "../../public/music/music";
+import { Music } from "../music/music";
 import { PNJ } from "../components/PNJ";
 import { DialogManager } from "../Dialog/DialogManager";
 import { MissionManager } from "../core/MissionManager";
@@ -85,7 +85,7 @@ export class Level1 extends Level {
         MazeGenerator.deploy(this.scene);
 
         const playerStart = MazeGenerator.spawnZones.playerStart;
-        this.player = new Player(this.scene, playerStart,"SinjUltime.glb",1);
+        this.player = new Player(this.scene, playerStart,"SinjUltime.glb",this.hud,1);
         this.projectiles = new Projectile(this.scene, this.player, this.enemies);
         await this.player.meshReady();
 
@@ -212,7 +212,7 @@ export class Level1 extends Level {
             // Pas encore vu l’intro : ne rien afficher
             this.hud.hideCounter();
             this.hud.hideDistance();
-            this.hud.updateMission("");
+            this.hud.updateMission(""); // Efface la mission
             return;
         }
 
@@ -232,7 +232,7 @@ export class Level1 extends Level {
             const closest = this.getClosestCollectible();
             if (closest && playerPosition) {
                 const dist = Vector3.Distance(playerPosition, closest.getPosition());
-                this.hud.updateMission("Collecter les collectibles");
+                this.hud.updateMission("Collecter les collectibles"); // Affiche uniquement si nécessaire
                 this.hud.updateDistance(dist, "Collectible le plus proche");
                 this.hud.showCollectiblesHUD();
                 this.hud.update(this.collectedCount, this.totalCollectibles);
@@ -283,11 +283,73 @@ export class Level1 extends Level {
 
             if (this.collectedCount === this.totalCollectibles) {
                 this.hud.hideCollectiblesHUD();
-                this.spawnEndZone();
+
+                // Téléportation du joueur près du PNJ
+                const pnjPosition = this.pnj.getPosition();
+                const teleportPosition = new Vector3(pnjPosition.x + 1, pnjPosition.y, pnjPosition.z);
+                this.player.getCapsule().position = teleportPosition;
+                console.log(`📍 Joueur téléporté près du PNJ à la position : ${teleportPosition}`);
+
+                // Mise à jour de la mission
+                this.missionManager.setMission("Parler à l'inconnu pour continuer");
+
+                // Spawn de la zone de fin près du joueur
+                this.spawnEndZoneNearPlayer();
             }
         }
     }
 
+    private spawnEndZoneNearPlayer() {
+        this.endPoint = MeshBuilder.CreateDisc("endZone", { radius: 5 }, this.scene);
+
+        // Place la zone de fin à proximité du joueur
+        const playerPosition = this.player.getCapsulePosition();
+        this.endPoint.position = new Vector3(playerPosition.x, 0.1, playerPosition.z + 5);
+
+        const mat = new StandardMaterial("endZoneMat", this.scene);
+        mat.diffuseColor = new Color3(0, 1, 0);
+        this.endPoint.material = mat;
+        this.endPoint.isPickable = true;
+
+        // Création du pop-up
+        const endZoneHint = document.createElement("div");
+        endZoneHint.style.position = "absolute";
+        endZoneHint.style.bottom = "50px";
+        endZoneHint.style.left = "50%";
+        endZoneHint.style.transform = "translateX(-50%)";
+        endZoneHint.style.padding = "10px 20px";
+        endZoneHint.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+        endZoneHint.style.color = "white";
+        endZoneHint.style.fontFamily = "Arial, sans-serif";
+        endZoneHint.style.fontSize = "18px";
+        endZoneHint.style.borderRadius = "5px";
+        endZoneHint.style.display = "none";
+        endZoneHint.innerText = "Appuyez sur E pour passer au niveau suivant";
+        document.body.appendChild(endZoneHint);
+
+        this.scene.onBeforeRenderObservable.add(() => {
+            const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
+            this.hud.updateDistance(Math.round(dist), "Zone de fin");
+
+            // Affiche ou masque le pop-up en fonction de la distance
+            if (dist < 5) {
+                endZoneHint.style.display = "block";
+            } else {
+                endZoneHint.style.display = "none";
+            }
+        });
+
+        window.addEventListener("keydown", (event) => {
+            if (event.key.toLowerCase() === "e") {
+                const dist = Vector3.Distance(this.player.getCapsule().position, this.endPoint.position);
+                if (dist < 5) {
+                    console.log("🎉 Niveau terminé !");
+                    endZoneHint.style.display = "none"; // Masque le pop-up
+                    this.loadLevel2(); // Charge le niveau 2
+                }
+            }
+        });
+    }
 
     private getClosestCollectible(): Collectible | null {
         let closest: Collectible | null = null;

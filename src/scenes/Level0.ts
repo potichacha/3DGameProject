@@ -1,5 +1,5 @@
 import {
-    Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, 
+    Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight,
 KeyboardEventTypes, Ray, Color3, Mesh, Texture, DynamicTexture, PointLight,SceneLoader,PhysicsAggregate, PhysicsShapeType,PhysicsImpostor
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
@@ -9,6 +9,7 @@ import { Level } from "./Level";
 import { DialogManager } from "../Dialog/DialogManager";
 import { SceneUtils } from "../utils/SceneUtils";
 import { Music } from "../../public/music/music";
+import { HUD } from "../components/HUD"; // Import the HUD class
 
 export class Level0 extends Level{
     protected scene!: Scene;
@@ -39,7 +40,7 @@ export class Level0 extends Level{
             bedroomMesh.scaling = new Vector3(1.2, 1.2, 1.2);
             bedroomMesh.metadata = { level0: true };
         }
-        
+
         const light = new HemisphericLight("light", new Vector3(0, 1, 0), this.scene);
         light.intensity = 0.7;
         light.metadata = { level0: true };
@@ -103,14 +104,14 @@ export class Level0 extends Level{
         westWall.material = wallMaterial;
         westWall.metadata = { level0: true };
         new PhysicsAggregate(westWall, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
-        
+
         //gestion collision meuble
         const petitmeuble = MeshBuilder.CreateBox("petitmeuble", {
             width: 20,
             height: 20,
             depth: 10,
         }, this.scene);
-        
+
         petitmeuble.position = new Vector3(68, 0, 30);
         petitmeuble.rotation.y = Math.PI / 2;
         petitmeuble.visibility = 0;
@@ -122,7 +123,7 @@ export class Level0 extends Level{
             height: 20,
             depth: 50,
         }, this.scene);
-        
+
         lit.position = new Vector3(65, 0, 52);
         lit.rotation.y = Math.PI / 2;
         lit.visibility = 0;
@@ -134,19 +135,19 @@ export class Level0 extends Level{
             height: 20,
             depth: 25,
         }, this.scene);
-        
+
         porte.position = new Vector3(-30, 0, 65);
         porte.rotation.y = Math.PI / 2;
         porte.visibility = 0;
         porte.metadata = { level0: true };
         new PhysicsAggregate(porte, PhysicsShapeType.BOX, { mass: 0 }, this.scene);
-        
+
         const lampe = MeshBuilder.CreateBox("lampe", {
             width: 18,
             height: 20,
             depth: 10,
         }, this.scene);
-        
+
         lampe.position = new Vector3(72, 0, 72);
         lampe.rotation.y = Math.PI / 2;
         lampe.visibility = 0;
@@ -158,7 +159,7 @@ export class Level0 extends Level{
             height: 20,
             depth: 22,
         }, this.scene);
-        
+
         grandmeuble.position = new Vector3(72, 0, -60);
         grandmeuble.rotation.y = Math.PI / 2;
         grandmeuble.visibility = 0;
@@ -170,7 +171,7 @@ export class Level0 extends Level{
             height: 20,
             depth: 14,
         }, this.scene);
-        
+
         chaise.position = new Vector3(-36, 0, -40);
         chaise.rotation.y = Math.PI / 2;
         chaise.visibility = 0;
@@ -182,7 +183,7 @@ export class Level0 extends Level{
             height: 20,
             depth: 35,
         }, this.scene);
-        
+
         bureau.position = new Vector3(-30, 0, -61);
         bureau.rotation.y = Math.PI / 2;
         bureau.visibility = 0;
@@ -269,7 +270,7 @@ export class Level0 extends Level{
             }
         };
 
-        this.scene.onBeforeRenderObservable.add(() => { 
+        this.scene.onBeforeRenderObservable.add(() => {
             const playerPosition = this.player.getCapsulePosition();
             const distanceToComputer = Vector3.Distance(playerPosition, ordinateur.position);
             const distanceToBed1 = Vector3.Distance(playerPosition, new Vector3(49, 4, 34));
@@ -301,12 +302,13 @@ export class Level0 extends Level{
         });
 
         // Gestion personnage et caméra
-        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb",0); // Removed the extra "level0" argument
+        const hud = new HUD(); // Create an instance of HUD
+        this.player = new Player(this.scene, new Vector3(0, 0, 0), "student.glb", hud, 0); // Pass the HUD instance
         await this.player.meshReady();
         this.player.getMesh().scaling = new Vector3(0.16, 0.16, 0.16);
         setupControls(this.player, 240);
         super.setupFollowCamera();
-        this.followCamera.heightOffset = 30; 
+        this.followCamera.heightOffset = 30;
         this.followCamera.radius = 80;
         this.update(); // Pour debug la position joueur
 
@@ -322,7 +324,7 @@ export class Level0 extends Level{
     protected update() {
         this.scene.onBeforeRenderObservable.add(() => {
             //console.log("📍 Player position:", this.player.getCapsulePosition());
-            
+
         });
         window.addEventListener("keydown", () => {
             this.music.playMusic();
@@ -349,7 +351,7 @@ export class Level0 extends Level{
         if (this.player?.getPhysics()?.body) {
             this.player?.getPhysics()?.body.dispose();
         }
-        
+
         const playerMesh = this.player.getMesh?.();
         if (playerMesh?.dispose) {
             playerMesh.dispose();
