@@ -1,13 +1,20 @@
 {
-  "dependencies": {
-    "@babylonjs/havok": "^1.3.10",
-    "@babylonjs/loaders": "^7.45.0",
-    "babylonjs": "^7.45.0"
+  "name": "vite-project-test",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@babylonjs/core": "^7.47.2",
+    "@babylonjs/core": "^7.45.0",
     "@babylonjs/inspector": "^7.45.0",
-    "@types/babylonjs": "^2.3.31",
+    "typescript": "~5.6.2",
     "vite": "^6.0.11"
+  },
+  "dependencies": {
+    "@babylonjs/havok": "^1.3.10"
   }
 }

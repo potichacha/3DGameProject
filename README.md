@@ -2,26 +2,30 @@
 ## Projet réalisé par Sacha Chantoiseau, Jawel Briki et Mehdi Mansour
 
 ## Projet
-Ce projet consiste à réaliser un jeu en 3D dans lequel on joue un personnage qui se déplace dans un labyrithe et doit récupérer des boules jaunes pour terminer le niveau.\
-Pour réaliser les différents déplacements et gérer les collisions, nous utilisons le moteur physique Havok.\
-Pour générer le labyrinthe, nous utilisons un algorithme de génération procédurale, nous permettant ainsi de générer plusieurs niveaux.\
-Pour le moment, nous avons réalisé un niveau pour notre V1.
+Ce projet consiste à réaliser un jeu en 3D dans lequel on joue un personnage qui doit sortir de ses cauchemars, modélisés sur plusieurs niveaux.
 
-Notre personnage est une boule mais sera un personnage (mesh) créé sur Blender mais nous avons eu des bugs inattendus. C'est pourquoi ce personnage sera implémenté dans nos futures versions du jeu.
+Niveau 1: Labyrinthe (généré procéduralement) - Objectif: récupérer des éléments à collecter gardés par des ennemis\
+Niveau 2: Jeu de plateformes (aussi générées procéduralement) - Objectif: arriver au bout en sautant sur les plateformes, attention à ne pas tomber!\
+Niveau 3: Shoot 'em up\
+\
+Pour réaliser les différents déplacements et gérer les collisions, nous utilisons le moteur physique Havok.
 
-#### <ins>Commande du joueur</ins> :
+#### <ins>Commandes du joueur</ins> :
 ```
-Avancer : z
-Reculer : s
-Tourner à droite : d
-Tourner à gauche : g
+Avancer : Z
+Reculer : S
+Tourner à droite : D
+Tourner à gauche : Q
+Sauter : Espace
 ```
 
-## Objectif
+## Elements du Jeu
 
-- [ ] Importer convenablement le mesh et réparer les bugs
-- [ ] Ajouter des "skins" pour les murs
-- [ ] Ajouter des niveaux
+- [x] Menu
+- [x] Niveau d'introduction
+- [x] Niveau 1
+- [x] Niveau 2
+- [ ] Niveau 3
 
 # Merci pour votre attention
 L'Equipe Sinj Corp
