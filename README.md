@@ -2,7 +2,8 @@
 ## Projet réalisé par Sacha Chantoiseau, Jawel Briki et Mehdi Mansour
 
 ## Comment jouer
-
+Le jeu est disponible ici: https://dreamweaver-5grl.onrender.com/  
+Pour les contrôles, référez-vous à la partie correspondante plus bas.
 
 ## Projet
 Ce projet consiste à réaliser un jeu en 3D dans lequel on joue un personnage qui doit sortir de ses cauchemars, modélisés sur plusieurs niveaux.
