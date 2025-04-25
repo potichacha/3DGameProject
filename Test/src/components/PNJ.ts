@@ -1,4 +1,4 @@
-import { Scene, MeshBuilder, StandardMaterial, Vector3, Color3, Mesh, SceneLoader, PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
+import { Scene, MeshBuilder, Vector3, Mesh, SceneLoader, PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 
 export class PNJ {
     private scene: Scene;

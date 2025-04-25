@@ -14,7 +14,6 @@ import { Level } from "./Level";
 import { Player } from "../components/Player";
 import { PlatformGenerator, PlatformGenerationResult } from "../procedural/PlatformGenerator";
 import { setupControls } from "../core/InputManager";
-import { AssetLoader } from "../assets/assetLoader";
 import { HUD } from "../components/HUD";
 import {Music} from "../music/music";
 // Assuming SceneUtils might be used later

@@ -1,8 +1,5 @@
 import { GameEngine } from "./core/GameEngine";
-import { Level1 } from "./scenes/Level1";
-import { Level0 } from "./scenes/Level0";
 import { Menu } from "./scenes/Menu";
-import {Level2} from "./scenes/Level2";
 
 const canvas = document.getElementById("gameCanvas");
 

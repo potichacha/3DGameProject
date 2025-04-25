@@ -1,6 +1,6 @@
 import {
     Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight,
-    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture, DynamicTexture, PointLight
+    FreeCamera, KeyboardEventTypes, Ray, Color3, Mesh, Texture, PointLight
 } from "@babylonjs/core";
 import { PhysicsAggregate, PhysicsShapeType } from "@babylonjs/core";
 import { Level } from "../scenes/Level"; // Ensure the correct path to the Level class or interface
@@ -373,8 +373,7 @@ export class Level1 extends Level {
         for (const collectiblePos of MazeGenerator.spawnZones.collectibles) {
             let spawned = 0;
             const angleStep = (2 * Math.PI) / maxEnemiesPerZone;
-
-            const spawnRadius = 8; // Rayon autour du collectible pour le spawn aléatoire
+// Rayon autour du collectible pour le spawn aléatoire
             const maxAttempts = 20; // Limite de tentatives pour éviter une boucle infinie
 
             while (spawned < maxEnemiesPerZone) {
@@ -414,7 +413,6 @@ export class Level1 extends Level {
     }
 
     private updateEnemies() {
-        const delta = this.scene.getEngine().getDeltaTime() / 1000;
         for (const enemy of this.enemies) {
             const mesh = enemy.getMesh();
             if (!mesh) continue;
@@ -487,9 +485,5 @@ export class Level1 extends Level {
         }).catch((error) => {
             console.error("❌ Erreur lors du chargement du niveau 2 :", error);
         });
-    }
-
-    private endLevel() {
-        console.log("🏆 Félicitations, vous avez terminé le niveau !");
     }
 }

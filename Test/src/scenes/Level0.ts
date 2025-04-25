@@ -1,13 +1,12 @@
 import {
     Scene, Vector3, MeshBuilder, StandardMaterial, FollowCamera, HemisphericLight, 
-KeyboardEventTypes, Ray, Color3, Mesh, Texture, DynamicTexture, PointLight,SceneLoader,PhysicsAggregate, PhysicsShapeType,PhysicsImpostor
+Color3, SceneLoader,PhysicsAggregate, PhysicsShapeType
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 import { Player } from "../components/Player";
 import { setupControls } from "../core/InputManager";
 import { Level } from "./Level";
 import { DialogManager } from "../Dialog/DialogManager";
-import { SceneUtils } from "../utils/SceneUtils";
 import { Music } from "../music/music";
 import { HUD } from "../components/HUD"; // Import the HUD class
 

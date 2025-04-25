@@ -1,12 +1,10 @@
 // 📄 DialogManager.ts
 import { Scene } from "@babylonjs/core";
-import { PNJ } from "../components/PNJ";
-import { HUD } from "../components/HUD";
 
 export class DialogManager {
     private dialogBox: HTMLElement;
     private intervalId: number | null = null;
-    private scene: Scene;
+    public scene: Scene;
     private introComplete: boolean = false;
 
     constructor(scene: Scene) {
@@ -44,8 +42,6 @@ export class DialogManager {
 
     private showDialog(lines: string[], onComplete: () => void) {
         let index = 0;
-        const skipHint = " <span style='opacity: 0.7;'>(Appuyez sur Espace pour continuer)</span>";
-
         const showLine = () => {
             const [speaker, text] = this.extractSpeakerAndText(lines[index]);
             this.typeText(speaker, text, () => {

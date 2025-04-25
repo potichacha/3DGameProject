@@ -3,7 +3,7 @@ import { Level0 } from "./scenes/Level0";
 import { Level1 } from "./scenes/Level1";
 
 export class Game {
-    private engine: GameEngine;
+    public engine: GameEngine;
 
     constructor(canvas: HTMLCanvasElement) {
         this.engine = new GameEngine(canvas, (scene) => {

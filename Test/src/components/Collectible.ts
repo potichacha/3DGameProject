@@ -1,5 +1,4 @@
 import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, AbstractMesh, PointLight } from "@babylonjs/core";
-import { MazeGenerator } from "../procedural/MazeGenerator";
 
 export class Collectible {
     private scene: Scene;
