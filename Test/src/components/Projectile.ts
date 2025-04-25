@@ -15,7 +15,7 @@ export class Projectile {
         this.scene = scene; 
         this.player = player;
         this.enemies = enemies;
-        this.shootSound = new Sound("pew pew", "./public/music/pew-pew.mp3", this.scene, null, { loop: false, autoplay: false, volume: 0.2 });
+        this.shootSound = new Sound("pew pew", "/music/pew-pew.mp3", this.scene, null, { loop: false, autoplay: false, volume: 0.2 });
         this.setupShooting();
     }
 

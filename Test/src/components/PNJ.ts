@@ -10,7 +10,7 @@ export class PNJ {
     constructor(scene: Scene, position: Vector3) {
         this.scene = scene;
 
-        SceneLoader.ImportMeshAsync("", "./public/models/", "chat.glb", this.scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "/models/", "chat.glb", this.scene).then((result) => {
             console.log("🔍 PNJ importés :", result.meshes);
 
             this.mesh = result.meshes[0] as Mesh;

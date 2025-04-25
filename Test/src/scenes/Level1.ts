@@ -45,7 +45,7 @@ export class Level1 extends Level {
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         super(scene, canvas);
         this.hud = new HUD();
-        this.music = new Music("./public/music/maze.mp3");
+        this.music = new Music("/music/maze.mp3");
         this.missionManager = new MissionManager(this.hud);
         this.dialogManager = new DialogManager(scene);
         this.init();
@@ -75,7 +75,7 @@ export class Level1 extends Level {
         ground.checkCollisions = true;
 
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
-        groundMaterial.diffuseTexture = new Texture("./public/textures/cloud2.jpg", this.scene);
+        groundMaterial.diffuseTexture = new Texture("/textures/cloud2.jpg", this.scene);
         ground.material = groundMaterial;
         (groundMaterial.diffuseTexture as Texture).uScale = 25;
         (groundMaterial.diffuseTexture as Texture).vScale = 25;

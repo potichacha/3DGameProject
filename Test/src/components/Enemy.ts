@@ -15,7 +15,7 @@ export class Enemy {
         this.scene = scene;
         this.health = health;
 
-        SceneLoader.ImportMeshAsync("", "./public/models/", "3d-crayon/source/Crayon 3D.glb", this.scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "/models/", "3d-crayon/source/Crayon 3D.glb", this.scene).then((result) => {
             this.mesh = result.meshes[0];
             this.mesh.position = position;
             this.mesh.rotationQuaternion = Quaternion.Identity();
