@@ -6,7 +6,7 @@ import { Music } from "../music/music";
 export class Menu {
     private scene: Scene;
     private canvas: HTMLCanvasElement;
-    private music: Music= new Music("./src/music/soundstrack/dream-day.mp3");
+    private music: Music= new Music("./public/music/dream-day.mp3");
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         this.scene = scene;

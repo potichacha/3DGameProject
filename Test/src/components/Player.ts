@@ -76,7 +76,7 @@ export class Player {
     }
 
     private createMesh(startPosition: Vector3) {
-        SceneLoader.ImportMeshAsync("", "./src/assets/models/", this.nameMesh, this.scene).then((result) => {
+        SceneLoader.ImportMeshAsync("", "./public/models/", this.nameMesh, this.scene).then((result) => {
             console.log("🔍 Meshes importés :", result.meshes);
             console.log("🔍 Meshes importés :", result);
 

@@ -32,7 +32,7 @@ export class Level2 extends Level {
     private globalLight!: HemisphericLight; // Keep track of light
     private updateObserver: any = null;
     private fallDetectionObserver: any = null; // Observer for fall detection
-    private music: Music = new Music("./src/music/soundstrack/akanegakubo.mp3");
+    private music: Music = new Music("./public/music/akanegakubo.mp3");
 
     constructor(scene: Scene, canvas: HTMLCanvasElement) {
         super(scene, canvas);
@@ -57,7 +57,7 @@ export class Level2 extends Level {
 
         // Setup skybox
         const groundMaterial = new StandardMaterial("groundMaterial", this.scene);
-                groundMaterial.diffuseTexture = new Texture("./src/assets/textures/cloud2.jpg", this.scene);
+                groundMaterial.diffuseTexture = new Texture("./public/textures/cloud2.jpg", this.scene);
         this.skybox = MeshBuilder.CreateBox("skyBox", { size: 1500.0 }, this.scene);
         this.skybox.material = groundMaterial;
 

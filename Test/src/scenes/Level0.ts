@@ -24,12 +24,12 @@ export class Level0 extends Level{
 
     constructor(scene: Scene,canvas: HTMLCanvasElement) {
         super(scene, canvas);
-        this.music = new Music("./src/music/soundstrack/rendez-vous.mp3");
+        this.music = new Music("./public/music/rendez-vous.mp3");
         this.init();
     }
 
     private async init() {
-        await SceneLoader.AppendAsync("./src/assets/models/", "bedroom.glb", this.scene);
+        await SceneLoader.AppendAsync("./public/models/", "bedroom.glb", this.scene);
         console.log("🔍 Chambre importée !",);
         const bedroomMesh = this.scene.getMeshByName("__root__");
         if (bedroomMesh) {

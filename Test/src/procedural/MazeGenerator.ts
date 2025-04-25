@@ -115,8 +115,8 @@ export class MazeGenerator {
 
     static deploy(scene: Scene) {
         const wallMaterial = new StandardMaterial("wallMaterial", scene);
-        wallMaterial.diffuseTexture = new Texture("./src/assets/textures/nuagenoir.jpg", scene);
-        //wallMaterial.diffuseTexture = new Texture("./src/assets/textures/Deepslate.webp", scene);
+        wallMaterial.diffuseTexture = new Texture("./public/textures/nuagenoir.jpg", scene);
+        //wallMaterial.diffuseTexture = new Texture("./public/textures/Deepslate.webp", scene);
         wallMaterial.diffuseTexture.wrapU = Texture.WRAP_ADDRESSMODE;
         wallMaterial.diffuseTexture.wrapV = Texture.WRAP_ADDRESSMODE;
         
