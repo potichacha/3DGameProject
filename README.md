@@ -1,7 +1,12 @@
 # Projet 3D Game Programming
 ## Projet réalisé par Sacha Chantoiseau, Jawel Briki et Mehdi Mansour
 
+## Comment jouer
+Le jeu est disponible ici: https://dreamweaver-5grl.onrender.com/
+Pour les contrôles, référez-vous à la partie correspondante plus bas.
+
 ## Inspiration
+Pourquoi participer ? Pour tester nos compétences acquises durant nos études mais également pour le plaisir de participer à un projet de groupe, vivre une expérience de projet de group, apprendre à communiquer, bien communiquer, partage des taches etc.\
 Pour ce projet, le thème du concours nous a fait penser au rêve fantastique, mais également au cauchemar. Nous avons donc développé notre jeu autour de ce thème.\
 Pour notre personnage, nous avons créé un singe, car c’est un animal qui, dans les mondes fantastiques, est souvent drôle. De plus, nous voulions ajouter une touche personnelle à notre projet (un délire humoristique propre à notre groupe).\
 Dans le premier niveau, le joueur incarne un personnage qui s’endort et commence à rêver. Il vit alors une expérience immersive dans ses rêves.\
@@ -16,8 +21,6 @@ Niveau 2: Jeu de plateformes (aussi générées procéduralement) - Objectif: ar
 Niveau 3: Shoot 'em up (en cours de développement)\
 \
 Pour réaliser les différents déplacements et gérer les collisions, nous utilisons le moteur physique Havok.
-
-## Comment jouer
 
 #### <ins>Commandes du joueur</ins> :
 ```
